@@ -89,8 +89,28 @@ type TemplateRegistry struct {
 	templates map[string]*template.Template
 }
 
+func (t *TemplateRegistry) RenderErr(w io.Writer, name string, err error, c echo.Context) error {
+	tmpl, renderError := template.New("error").ParseFS(views, "error.html")
+
+	if renderError != nil {
+		panic(renderError)
+	}
+
+	return tmpl.ExecuteTemplate(w, "error", err)
+}
+
 func (t *TemplateRegistry) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	// return html.Dashboard(w, html.DashboardParams{}, "layout.html")
+	if name == "error" {
+		tmpl, renderError := template.New("error").ParseFS(views, "error.html")
+
+		if renderError != nil {
+			panic(renderError)
+		}
+
+		return tmpl.ExecuteTemplate(w, "error", data)
+	}
+
 	return t.templates[name].ExecuteTemplate(w, "layout.html", data)
 }
 

@@ -1,65 +1,35 @@
 {{ define "content" }}
-<!-- <section class="table-components"> -->
 <section class="table-components" style="padding-top: 15px; padding-left: 30px; padding-right: 30px;">
-  <!-- <div class="container-fluid" style="padding-top: 30px;"> -->
   <div class="my-3 p-3 bg-body rounded shadow-sm">
+    <h6 class="border-bottom pb-2 mb-2">Cryptographic APIs</h6>
     <table class="table">
       <thead>
         <tr>
-          <th scope="col">#</th>
-          <th scope="col">First</th>
-          <th scope="col">Last</th>
+          <th scope="col">Id</th>
+          <th scope="col">Name</th>
+          <th scope="col">Shortname</th>
           <th scope="col">Action</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <th scope="row">1</th>
-          <td>Mark</td>
-          <td>Otto</td>
-          <td>
-            <div class="action">
-              <button class="text-danger">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                  class="bi bi-trash-fill" viewBox="0 0 16 16">
-                  <path
-                    d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <th scope="row">2</th>
-          <td>Jacob</td>
-          <td>Thornton</td>
-          <td>
-            <div class="action">
-              <button class="text-danger">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                  class="bi bi-trash-fill" viewBox="0 0 16 16">
-                  <path
-                    d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <th scope="row">3</th>
-          <td colspan="2">awdawd</td>
-          <td>
-            <div class="action">
-              <button class="text-danger">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                  class="bi bi-trash-fill" viewBox="0 0 16 16">
-                  <path
-                    d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
+        {{range $item := .CryptoApis }}
+          <tr id="cryptoapi-{{ .ID }}">
+            <th scope="row">{{ .ID }}</th>
+            <td>{{ .Name.String }}</td>
+            <td>{{ .Shortname.String }}</td>
+            <td>
+              <div class="action">
+                <button class="text-danger" hx-target="#cryptoapi-{{ .ID }}" hx-delete="/settings/cryptoapi/{{ .ID }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                    class="bi bi-trash-fill" viewBox="0 0 16 16">
+                    <path
+                      d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        {{ end }}
       </tbody>
     </table>
   </div>
@@ -67,65 +37,105 @@
 
 
 <section class="table-components" style="padding-top: 15px; padding-left: 30px; padding-right: 30px;">
-  <!-- <div class="container-fluid" style="padding-top: 30px;"> -->
   <div class="my-3 p-3 bg-body rounded shadow-sm">
+    <h6 class="border-bottom pb-2 mb-2">Signing Request APIs</h6>
     <table class="table">
       <thead>
         <tr>
-          <th scope="col">#</th>
-          <th scope="col">First</th>
-          <th scope="col">Last</th>
+          <th scope="col">Id</th>
+          <th scope="col">Name</th>
           <th scope="col">Action</th>
         </tr>
       </thead>
       <tbody>
+        {{range $item := .SigningApis }}
+          <tr id="signingapi-{{ .ID }}">
+            <th scope="row">{{ .ID }}</th>
+            <td>{{ .Name.String }}</td>
+            <td>
+              <div class="action">
+                <button class="text-danger" hx-target="#signingapi-{{ .ID }}" hx-delete="/settings/signingapi/{{ .ID }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                    class="bi bi-trash-fill" viewBox="0 0 16 16">
+                    <path
+                      d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="table-components" style="padding-top: 15px; padding-left: 30px; padding-right: 30px;">
+  <div class="my-3 p-3 bg-body rounded shadow-sm">
+    <h6 class="border-bottom pb-2 mb-2">Cipher Algorithms</h6>
+    <table class="table">
+      <thead>
         <tr>
-          <th scope="row">1</th>
-          <td>Mark</td>
-          <td>Otto</td>
-          <td>
-            <div class="action">
-              <button class="text-danger">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                  class="bi bi-trash-fill" viewBox="0 0 16 16">
-                  <path
-                    d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
-                </svg>
-              </button>
-            </div>
-          </td>
+          <th scope="col">Id</th>
+          <th scope="col">Name</th>
+          <th scope="col">Keysize</th>
+          <th scope="col">Action</th>
         </tr>
+      </thead>
+      <tbody>
+        {{range $item := .CipherAlgorithms }}
+          <tr id="cipheralg-{{ .ID }}">
+            <th scope="row">{{ .ID }}</th>
+            <td>{{ .Name.String }}</td>
+            <td>{{ .Keysize.Int64 }}</td>
+            <td>
+              <div class="action">
+                <button class="text-danger" hx-target="#cipheralg-{{ .ID }}" hx-delete="/settings/cipheralgorithm/{{ .ID }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                    class="bi bi-trash-fill" viewBox="0 0 16 16">
+                    <path
+                      d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+
+<section class="table-components" style="padding-top: 15px; padding-left: 30px; padding-right: 30px;">
+  <div class="my-3 p-3 bg-body rounded shadow-sm">
+    <h6 class="border-bottom pb-2 mb-2">Hash Algorithms</h6>
+    <table class="table">
+      <thead>
         <tr>
-          <th scope="row">2</th>
-          <td>Jacob</td>
-          <td>Thornton</td>
-          <td>
-            <div class="action">
-              <button class="text-danger">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                  class="bi bi-trash-fill" viewBox="0 0 16 16">
-                  <path
-                    d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
-                </svg>
-              </button>
-            </div>
-          </td>
+          <th scope="col">Id</th>
+          <th scope="col">Name</th>
+          <th scope="col">Action</th>
         </tr>
-        <tr>
-          <th scope="row">3</th>
-          <td colspan="2">awdawd</td>
-          <td>
-            <div class="action">
-              <button class="text-danger">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                  class="bi bi-trash-fill" viewBox="0 0 16 16">
-                  <path
-                    d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
+      </thead>
+      <tbody>
+        {{range $item := .HashAlgorithms }}
+          <tr id="hashalg-{{ .ID }}">
+            <th scope="row">{{ .ID }}</th>
+            <td>{{ .Name.String }}</td>
+            <td>
+              <div class="action">
+                <button class="text-danger" hx-target="#hashalg-{{ .ID }}" hx-delete="/settings/hashalgorithm/{{ .ID }}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                    class="bi bi-trash-fill" viewBox="0 0 16 16">
+                    <path
+                      d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        {{ end }}
       </tbody>
     </table>
   </div>
