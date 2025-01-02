@@ -55,3 +55,5 @@ https://anubissec.github.io/How-To-Call-Windows-APIs-In-Golang/#
 https://justen.codes/breaking-all-the-rules-using-go-to-call-windows-api-2cbfd8c79724?gi=1337f3df6dc9
 https://www.thesubtlety.com/post/getting-started-golang-windows-apis/
 
+
+

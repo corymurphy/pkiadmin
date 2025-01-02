@@ -16,128 +16,148 @@ var (
 	ContextMachine      = 2
 )
 
-func CreatePrivateKeyCom() interface{} {
+func CreatePrivateKeySandbox() interface{} {
 	var err error
-	// windows.
+	var response string
+	var result *ole.VARIANT
 
-	// imagePath, _ := windows.UTF16PtrFromString(`C:\Users\User\Pictures\image.jpg`)
-	// fmt.Println("[+] Changing background now...")
-	// _, _, err := procSystemParamInfo.Call(20, 0, uintptr(unsafe.Pointer(imagePath)), 0x001A)
-
-	// CX509PrivateKey
-
-	// certEnrollDll.
-
-	// fmt.Print
-
-	connection := &ole.Connection{nil}
-
-	// oleutil.ConnectObject()
-
-	err = connection.Initialize()
+	err = ole.CoInitialize(0)
 	if err != nil {
-		return fmt.Sprintf("result: %v", err)
+		return fmt.Sprintf("error result 1: %v", err)
 	}
-	defer connection.Uninitialize()
+	defer ole.CoUninitialize()
 
-	// CX509PrivateKey
+	upkcs, err := oleutil.CreateObject("X509Enrollment.CX509CertificateRequestPkcs10")
+	defer upkcs.Release()
 
-	// err = connection.Create("QBXMLRP2.RequestProcessor.1")
-	// err = connection.Create("CERTENROLLLib.IX509PrivateKey")
-	// \X509Enrollment.CX509PrivateKey
-
-	err = connection.Create("X509Enrollment.CX509PrivateKey")
 	if err != nil {
-		if err.(*ole.OleError).Code() == ole.CO_E_CLASSSTRING {
-			return fmt.Sprintf("result: %v", err)
-		}
-		return fmt.Sprintf("result: %v", err)
-	}
-	defer connection.Release()
-
-	dispatch, err := connection.Dispatch()
-	if err != nil {
-		return fmt.Sprintf("result: %v", err)
-	}
-	defer dispatch.Release()
-
-	// dispatch.S
-
-	// obj := connection.Object
-	// obj.*
-	// var pkDispatch *ole.VARIANT
-
-	// _, err = dispatch.Call("OpenConnection2", "", "Test Application 1", 1)
-	// pkDispatch, err = dispatch.Call("Create")
-	// if err != nil {
-	// 	return fmt.Sprintf("error result: %v", err)
-	// }
-
-	// CX509CertificateRequestPkcs10 pkcs10 = new CX509CertificateRequestPkcs10();
-
-	// pkcs10.InitializeFromPrivateKey(X509CertificateEnrollmentContext.ContextMachine, privateKey, "");
-
-	// err = connection.Create("X509Enrollment.CX509CertificateRequestPkcs10")
-	// if err != nil {
-	// 	if err.(*ole.OleError).Code() == ole.CO_E_CLASSSTRING {
-	// 		return fmt.Sprintf("result: %v", err)
-	// 	}
-	// 	return fmt.Sprintf("result: %v", err)
-	// }
-
-	pkcs10Id, err := oleutil.ClassIDFrom("X509Enrollment.CX509CertificateRequestPkcs10")
-	if err != nil {
-		return fmt.Sprintf("error result: %v", err)
+		return fmt.Sprintf("error result 2: %v", err)
 	}
 
-	pkId, err := oleutil.ClassIDFrom("X509Enrollment.CX509PrivateKey")
+	pkcs, err := upkcs.QueryInterface(ole.IID_IDispatch)
+
 	if err != nil {
-		return fmt.Sprintf("error result: %v", err)
+		return fmt.Sprintf("error result 3: %v", err)
 	}
 
-	unknownPkcs10, err := ole.CreateInstance(pkcs10Id, nil)
+	upk, err := oleutil.CreateObject("X509Enrollment.CX509PrivateKey")
+	defer upk.Release()
+
 	if err != nil {
-		return fmt.Sprintf("error result: %v", err)
-	}
-	pkcs10, err := unknownPkcs10.QueryInterface(ole.IID_IDispatch)
-	if err != nil {
-		return fmt.Sprintf("error result: %v", err)
+		return fmt.Sprintf("error result 4: %v", err)
 	}
 
-	unknownPk, err := ole.CreateInstance(pkId, nil)
+	pk, err := upk.QueryInterface(ole.IID_IDispatch)
+
 	if err != nil {
-		return fmt.Sprintf("error result: %v", err)
-	}
-	pkDispatch, err := unknownPk.QueryInterface(ole.IID_IDispatch)
-	if err != nil {
-		return fmt.Sprintf("error result: %v", err)
+		return fmt.Sprintf("error result 5: %v", err)
 	}
 
-	_ = oleutil.MustCallMethod(pkDispatch, "Create")
+	result, err = oleutil.PutProperty(pk, "MachineContext", true)
+	response += fmt.Sprintf("<p>pk machine context result %s</p>", result.ToString())
 
-	// pk.ToIDispatch().VTable()
+	if err != nil {
+		return fmt.Sprintf("error result 6: %v", err)
+	}
 
-	// return fmt.Sprintf("pkResult %s", result.ToString())
+	result, err = oleutil.PutProperty(pk, "Length", 4096)
+	response += fmt.Sprintf("<p>pk length result %s</p>", result.ToString())
 
-	// result := oleutil.MustCallMethod(pkcs10, "InitializeFromPrivateKey", ContextMachine, uintptr(unsafe.Pointer(pk.RawVTable)), "")
-	result := oleutil.MustCallMethod(pkcs10, "InitializeFromPrivateKey",
-		ContextMachine,
-		pkDispatch.VTable(),
-		"")
+	if err != nil {
+		return fmt.Sprintf("error result 6: %v", err)
+	}
 
-	// uintptr(unsafe.Pointer(pk))
-	// uintptr(unsafe.Pointer(pk.ToIDispatch().RawVTable)),
-	// networkEnum := oleutil.MustCallMethod(pkcs10, "GetNetworkConnections").ToIDispatch()
+	result, err = oleutil.CallMethod(pk, "Create")
+	response += fmt.Sprintf("<p>pk create result %s</p>", result.ToString())
 
-	// err = conn
+	if err != nil {
+		return fmt.Sprintf("error result 7: %v", err)
+	}
 
-	// result.ToString()
+	udn, err := oleutil.CreateObject("X509Enrollment.CX500DistinguishedName")
 
-	// err = fmt.Errorf("something happened")
-	// return fmt.Sprintf("success result: %s %s", pkcs10Id.String(), pkId.String())
-	return fmt.Sprintf("result %s", result.ToString())
+	if err != nil {
+		return fmt.Sprintf("error result 8: %v", err)
+	}
+
+	dn, err := udn.QueryInterface(ole.IID_IDispatch)
+
+	if err != nil {
+		return fmt.Sprintf("error result 9: %v", err)
+	}
+
+	result, err = oleutil.CallMethod(dn, "Encode", "CN=certmgr-dev.lab2.internal", 0)
+	response += fmt.Sprintf("<p>dn encode result %s</p>", result.ToString())
+
+	if err != nil {
+		return fmt.Sprintf("error result 10: %v", err)
+	}
+
+	result, err = oleutil.CallMethod(pkcs, "InitializeFromPrivateKey", ContextMachine, pk, "")
+	response += fmt.Sprintf("<p>pkcs init result %s</p>", result.ToString())
+
+	if err != nil {
+		return fmt.Sprintf("error result 8: %v", err)
+	}
+
+	result, err = oleutil.PutProperty(pkcs, "Subject", dn)
+	response += fmt.Sprintf("<p>pkcs subject result %s</p>", result.ToString())
+
+	if err != nil {
+		return fmt.Sprintf("error result 8: %v", err)
+	}
+
+	uxe, err := oleutil.CreateObject("X509Enrollment.CX509Enrollment")
+	defer uxe.Release()
+
+	if err != nil {
+		return fmt.Sprintf("error result 9: %v", err)
+	}
+
+	xe, err := uxe.QueryInterface(ole.IID_IDispatch)
+
+	if err != nil {
+		return fmt.Sprintf("error result 10: %v", err)
+	}
+
+	result, err = oleutil.CallMethod(xe, "InitializeFromRequest", pkcs)
+	response += fmt.Sprintf("<p>xe init result %s</p>", result.ToString())
+
+	if err != nil {
+		return fmt.Sprintf("error result 11: %v", err)
+	}
+
+	csr, err := oleutil.CallMethod(xe, "CreateRequest", 1)
+	response += fmt.Sprintf("<p>xe create request result %s</p>", csr.ToString())
+
+	if err != nil {
+		return fmt.Sprintf("error result 12: %v", err)
+	}
+
+	ureq, err := oleutil.CreateObject("CertificateAuthority.Request")
+	defer ureq.Release()
+
+	if err != nil {
+		return fmt.Sprintf("error result 13: %v", err)
+	}
+
+	req, err := ureq.QueryInterface(ole.IID_IDispatch)
+
+	if err != nil {
+		return fmt.Sprintf("error result 14: %v", err)
+	}
+
+	result, err = oleutil.CallMethod(req, "Submit", 1, csr, "CertificateTemplate:ServerAuthentication-CngRsa", "certmgr-adds.lab2.internal\\Lab Root Authority")
+	response += fmt.Sprintf("<p>req submit result %s</p>", result.ToString())
+
+	if err != nil {
+		return fmt.Sprintf("error result 15: %v", err)
+	}
+
+	return response
+
 }
 
 func CreatePrivateKey() interface{} {
-	return CreatePrivateKeyCom()
+	return CreatePrivateKeySandbox()
 }
