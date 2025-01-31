@@ -4,19 +4,19 @@ tmp_dir = "tmp"
 
 [build]
   args_bin = []
-  full_bin = "C:\\Users\\cory\\workspace\\pkiadmin\\tmp\\main.exe"
-  cmd = "go build -o ./tmp/main.exe cmd/main.go"
+  bin = "tmp/main"
+  cmd = "go build -o ./tmp/main cmd/main.go"
   delay = 0
-  exclude_dir = ["node_modules", "assets", "tmp", "vendor", "testdata", "template", "examples"]
+  exclude_dir = ["node_modules", "assets", "tmp", "testdata", "template", "examples"]
   exclude_file = []
   exclude_regex = ["_test.go"]
   exclude_unchanged = false
   follow_symlink = false
-  include_dir = ["cmd", "views", "pkg", "db\\migrations"]
+  include_dir = ["cmd", "views", "pkg", "db/migrations", "vendor/github.com/oiweiwei/go-msrpc"]
   include_ext = ["go", "html", "sql"]
-  include_file = []
+  include_file = [".env"]
   kill_delay = "0s"
-  log = "build-errors.log"
+  log = "air.log"
   poll = false
   poll_interval = 0
   rerun = false
@@ -32,8 +32,9 @@ tmp_dir = "tmp"
   watcher = "cyan"
 
 [log]
-  main_only = false
+  main_only = true
   time = false
+  silent = false
 
 [misc]
   clean_on_exit = false

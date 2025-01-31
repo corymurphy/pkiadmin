@@ -1,0 +1,230 @@
+# github.com/geoffgarside/ber v1.1.0
+## explicit; go 1.13
+github.com/geoffgarside/ber
+# github.com/go-ole/go-ole v1.3.0
+## explicit; go 1.12
+github.com/go-ole/go-ole
+github.com/go-ole/go-ole/oleutil
+# github.com/golang-jwt/jwt v3.2.2+incompatible
+## explicit
+github.com/golang-jwt/jwt
+# github.com/golang-migrate/migrate/v4 v4.18.1
+## explicit; go 1.22.0
+github.com/golang-migrate/migrate/v4
+github.com/golang-migrate/migrate/v4/database
+github.com/golang-migrate/migrate/v4/database/sqlite3
+github.com/golang-migrate/migrate/v4/internal/url
+github.com/golang-migrate/migrate/v4/source
+github.com/golang-migrate/migrate/v4/source/file
+github.com/golang-migrate/migrate/v4/source/iofs
+# github.com/google/uuid v1.6.0
+## explicit
+github.com/google/uuid
+# github.com/hashicorp/errwrap v1.1.0
+## explicit
+github.com/hashicorp/errwrap
+# github.com/hashicorp/go-multierror v1.1.1
+## explicit; go 1.13
+github.com/hashicorp/go-multierror
+# github.com/hashicorp/go-uuid v1.0.3
+## explicit
+github.com/hashicorp/go-uuid
+# github.com/hirochachacha/go-smb2 v1.1.0
+## explicit; go 1.12
+github.com/hirochachacha/go-smb2
+github.com/hirochachacha/go-smb2/internal/crypto/ccm
+github.com/hirochachacha/go-smb2/internal/crypto/cmac
+github.com/hirochachacha/go-smb2/internal/erref
+github.com/hirochachacha/go-smb2/internal/msrpc
+github.com/hirochachacha/go-smb2/internal/ntlm
+github.com/hirochachacha/go-smb2/internal/smb2
+github.com/hirochachacha/go-smb2/internal/spnego
+github.com/hirochachacha/go-smb2/internal/utf16le
+# github.com/indece-official/go-ebcdic v1.2.0
+## explicit; go 1.18
+github.com/indece-official/go-ebcdic
+# github.com/jcmturner/aescts/v2 v2.0.0
+## explicit; go 1.13
+github.com/jcmturner/aescts/v2
+# github.com/jcmturner/dnsutils/v2 v2.0.0
+## explicit; go 1.13
+github.com/jcmturner/dnsutils/v2
+# github.com/jcmturner/gofork v1.7.6
+## explicit; go 1.7
+github.com/jcmturner/gofork/encoding/asn1
+github.com/jcmturner/gofork/x/crypto/pbkdf2
+# github.com/jcmturner/goidentity/v6 v6.0.1
+## explicit; go 1.13
+github.com/jcmturner/goidentity/v6
+# github.com/jcmturner/gokrb5/v8 v8.4.4
+## explicit; go 1.16
+github.com/jcmturner/gokrb5/v8/asn1tools
+github.com/jcmturner/gokrb5/v8/client
+github.com/jcmturner/gokrb5/v8/config
+github.com/jcmturner/gokrb5/v8/credentials
+github.com/jcmturner/gokrb5/v8/crypto
+github.com/jcmturner/gokrb5/v8/crypto/common
+github.com/jcmturner/gokrb5/v8/crypto/etype
+github.com/jcmturner/gokrb5/v8/crypto/rfc3961
+github.com/jcmturner/gokrb5/v8/crypto/rfc3962
+github.com/jcmturner/gokrb5/v8/crypto/rfc4757
+github.com/jcmturner/gokrb5/v8/crypto/rfc8009
+github.com/jcmturner/gokrb5/v8/gssapi
+github.com/jcmturner/gokrb5/v8/iana
+github.com/jcmturner/gokrb5/v8/iana/addrtype
+github.com/jcmturner/gokrb5/v8/iana/adtype
+github.com/jcmturner/gokrb5/v8/iana/asnAppTag
+github.com/jcmturner/gokrb5/v8/iana/chksumtype
+github.com/jcmturner/gokrb5/v8/iana/errorcode
+github.com/jcmturner/gokrb5/v8/iana/etypeID
+github.com/jcmturner/gokrb5/v8/iana/flags
+github.com/jcmturner/gokrb5/v8/iana/keyusage
+github.com/jcmturner/gokrb5/v8/iana/msgtype
+github.com/jcmturner/gokrb5/v8/iana/nametype
+github.com/jcmturner/gokrb5/v8/iana/patype
+github.com/jcmturner/gokrb5/v8/kadmin
+github.com/jcmturner/gokrb5/v8/keytab
+github.com/jcmturner/gokrb5/v8/krberror
+github.com/jcmturner/gokrb5/v8/messages
+github.com/jcmturner/gokrb5/v8/pac
+github.com/jcmturner/gokrb5/v8/service
+github.com/jcmturner/gokrb5/v8/spnego
+github.com/jcmturner/gokrb5/v8/types
+# github.com/jcmturner/rpc/v2 v2.0.3
+## explicit; go 1.13
+github.com/jcmturner/rpc/v2/mstypes
+github.com/jcmturner/rpc/v2/ndr
+# github.com/joho/godotenv v1.5.1
+## explicit; go 1.12
+github.com/joho/godotenv
+# github.com/labstack/echo/v4 v4.12.0
+## explicit; go 1.18
+github.com/labstack/echo/v4
+github.com/labstack/echo/v4/middleware
+# github.com/labstack/gommon v0.4.2
+## explicit; go 1.18
+github.com/labstack/gommon/bytes
+github.com/labstack/gommon/color
+github.com/labstack/gommon/log
+# github.com/mattn/go-colorable v0.1.13
+## explicit; go 1.15
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.20
+## explicit; go 1.15
+github.com/mattn/go-isatty
+# github.com/mattn/go-sqlite3 v1.14.24
+## explicit; go 1.19
+github.com/mattn/go-sqlite3
+# github.com/oiweiwei/go-msrpc v1.1.1
+## explicit; go 1.21.5
+github.com/oiweiwei/go-msrpc/dcerpc
+github.com/oiweiwei/go-msrpc/dcerpc/errors
+github.com/oiweiwei/go-msrpc/midl/uuid
+github.com/oiweiwei/go-msrpc/msrpc/dcetypes
+github.com/oiweiwei/go-msrpc/msrpc/dcom
+github.com/oiweiwei/go-msrpc/msrpc/dcom/client
+github.com/oiweiwei/go-msrpc/msrpc/dcom/iactivation/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/iobjectexporter/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/iremotescmactivator/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/iremunknown/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/iremunknown2/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/iunknown/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/oaut
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wcce
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wcce/client
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wcce/icertrequestd/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wcce/icertrequestd2/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wmi
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wmi/iwbemclassobject/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wmi/iwbemlevel1login/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wmi/iwbemservices/v0
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wmio
+github.com/oiweiwei/go-msrpc/msrpc/dcom/wmio/query
+github.com/oiweiwei/go-msrpc/msrpc/dtyp
+github.com/oiweiwei/go-msrpc/msrpc/epm/epm/v3
+github.com/oiweiwei/go-msrpc/msrpc/erref/hresult
+github.com/oiweiwei/go-msrpc/msrpc/erref/ntstatus
+github.com/oiweiwei/go-msrpc/msrpc/erref/win32
+github.com/oiweiwei/go-msrpc/msrpc/erref/wmi
+github.com/oiweiwei/go-msrpc/msrpc/samr/samr/v1
+github.com/oiweiwei/go-msrpc/msrpc/well_known
+github.com/oiweiwei/go-msrpc/ndr
+github.com/oiweiwei/go-msrpc/ndr/math
+github.com/oiweiwei/go-msrpc/smb2
+github.com/oiweiwei/go-msrpc/ssp
+github.com/oiweiwei/go-msrpc/ssp/credential
+github.com/oiweiwei/go-msrpc/ssp/crypto
+github.com/oiweiwei/go-msrpc/ssp/gssapi
+github.com/oiweiwei/go-msrpc/ssp/krb5
+github.com/oiweiwei/go-msrpc/ssp/krb5/crypto
+github.com/oiweiwei/go-msrpc/ssp/netlogon
+github.com/oiweiwei/go-msrpc/ssp/netlogon/crypto
+github.com/oiweiwei/go-msrpc/ssp/ntlm
+github.com/oiweiwei/go-msrpc/ssp/ntlm/internal
+github.com/oiweiwei/go-msrpc/ssp/spnego
+github.com/oiweiwei/go-msrpc/text/encoding/oem
+github.com/oiweiwei/go-msrpc/text/encoding/utf16le
+# github.com/oiweiwei/go-smb2.fork v0.0.0-20241220141821-a5dd82e09d5f
+## explicit; go 1.21.5
+github.com/oiweiwei/go-smb2.fork
+github.com/oiweiwei/go-smb2.fork/internal/crypto/ccm
+github.com/oiweiwei/go-smb2.fork/internal/crypto/cmac
+github.com/oiweiwei/go-smb2.fork/internal/erref
+github.com/oiweiwei/go-smb2.fork/internal/msrpc
+github.com/oiweiwei/go-smb2.fork/internal/ntlm
+github.com/oiweiwei/go-smb2.fork/internal/smb2
+github.com/oiweiwei/go-smb2.fork/internal/spnego
+github.com/oiweiwei/go-smb2.fork/internal/utf16le
+# github.com/rs/zerolog v1.33.0
+## explicit; go 1.15
+github.com/rs/zerolog
+github.com/rs/zerolog/internal/cbor
+github.com/rs/zerolog/internal/json
+# github.com/valyala/bytebufferpool v1.0.0
+## explicit
+github.com/valyala/bytebufferpool
+# github.com/valyala/fasttemplate v1.2.2
+## explicit; go 1.12
+github.com/valyala/fasttemplate
+# go.uber.org/atomic v1.7.0
+## explicit; go 1.13
+go.uber.org/atomic
+# golang.org/x/crypto v0.31.0
+## explicit; go 1.20
+golang.org/x/crypto/acme
+golang.org/x/crypto/acme/autocert
+golang.org/x/crypto/cryptobyte
+golang.org/x/crypto/cryptobyte/asn1
+golang.org/x/crypto/md4
+golang.org/x/crypto/pbkdf2
+# golang.org/x/net v0.33.0
+## explicit; go 1.18
+golang.org/x/net/http/httpguts
+golang.org/x/net/http2
+golang.org/x/net/http2/h2c
+golang.org/x/net/http2/hpack
+golang.org/x/net/idna
+# golang.org/x/sys v0.28.0
+## explicit; go 1.18
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# golang.org/x/text v0.21.0
+## explicit; go 1.18
+golang.org/x/text/encoding
+golang.org/x/text/encoding/charmap
+golang.org/x/text/encoding/internal
+golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/encoding/japanese
+golang.org/x/text/encoding/korean
+golang.org/x/text/encoding/simplifiedchinese
+golang.org/x/text/encoding/traditionalchinese
+golang.org/x/text/encoding/unicode
+golang.org/x/text/internal/utf8internal
+golang.org/x/text/runes
+golang.org/x/text/secure/bidirule
+golang.org/x/text/transform
+golang.org/x/text/unicode/bidi
+golang.org/x/text/unicode/norm
+# golang.org/x/time v0.6.0
+## explicit; go 1.18
+golang.org/x/time/rate

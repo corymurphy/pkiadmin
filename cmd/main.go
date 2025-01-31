@@ -52,6 +52,10 @@ func (r *SQLiteRepository) Migrate() error {
 	return err
 }
 
+// func init() {
+// 	godotenv.Load(".env")
+// }
+
 func main() {
 
 	os.Remove("pkiadmin.db")
@@ -292,7 +296,8 @@ func main() {
 	})
 
 	e.GET("sandbox", func(c echo.Context) error {
-		data := certificates.CreatePrivateKey()
+		data := certificates.Sandbox()
+		// data := certificates.WmiDemo2()
 		return c.Render(http.StatusOK, "error", data)
 	})
 

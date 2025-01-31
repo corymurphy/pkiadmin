@@ -57,3 +57,19 @@ https://www.thesubtlety.com/post/getting-started-golang-windows-apis/
 
 
 
+## generating a referent id
+
+```python
+class PCLSID_ARRAY(NDRPOINTER):
+    referent = (
+        ('Data', CLSID_ARRAY),
+    )
+
+return data + NDRSTRUCT.getData(self, soFar)
+
+# referent id
+
+# This field is a serialization mark and it may have any value. For instance in our rpc implementation we are using running numbers. This field means a reference and the referenced value comes later according to the serialization rules. The value is meaningless.
+
+# struct s1 { int f1; struct s2 * f2; int f3; } The above data is serialized as 1) f1 value 2) ref id for f2 3) f3 value 4) s2 contents. Hope this helps
+```
