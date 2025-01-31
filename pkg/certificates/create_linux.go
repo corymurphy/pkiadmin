@@ -10,16 +10,12 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"time"
 
 	"github.com/oiweiwei/go-msrpc/dcerpc"
 	"github.com/oiweiwei/go-msrpc/msrpc/dcom"
-	"github.com/oiweiwei/go-msrpc/msrpc/dcom/iactivation/v0"
 	"github.com/oiweiwei/go-msrpc/msrpc/dcom/iobjectexporter/v0"
 	"github.com/oiweiwei/go-msrpc/msrpc/dcom/iremunknown/v0"
 	"github.com/oiweiwei/go-msrpc/msrpc/dcom/iremunknown2/v0"
-	"github.com/oiweiwei/go-msrpc/msrpc/dcom/wmi"
-	"github.com/oiweiwei/go-msrpc/msrpc/dcom/wmi/iwbemlevel1login/v0"
 	"github.com/oiweiwei/go-msrpc/ndr"
 
 	"github.com/oiweiwei/go-msrpc/msrpc/dcom/iremotescmactivator/v0"
@@ -36,11 +32,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/oiweiwei/go-msrpc/dcerpc/errors"
 
-	// "github.com/oiweiwei/go-msrpc/msrpc/erref/hresult"
 	"github.com/oiweiwei/go-msrpc/ssp"
 	"github.com/oiweiwei/go-msrpc/ssp/credential"
-	// "github.com/oiweiwei/go-msrpc/ssp/gssapi"
-	// "github.com/google/uuid"
 )
 
 func init() {
@@ -51,12 +44,9 @@ func init() {
 
 	fmt.Println("---------", os.Getenv("SERVER"), cred.DomainName(), cred.UserName(), "---------")
 	gssapi.AddCredential(credential.NewFromPassword(os.Getenv("USERNAME"), os.Getenv("PASSWORD")))
-	// gssapi.AddMechanism(ssp.SPNEGO)
+	gssapi.AddMechanism(ssp.SPNEGO)
 	gssapi.AddMechanism(ssp.NTLM)
-	// gssapi.AddMechanism(ssp.KRB5)
-	// gssapi.AddMechanism(ssp.Netlogon)
-
-	// gssapi.AddMechanism(ssp.)
+	gssapi.AddMechanism(ssp.KRB5)
 
 	errors.AddMapper(hresult.Mapper{})
 }
@@ -112,102 +102,11 @@ var (
 	ZeroClassId = &dcom.ClassID{Data1: 0x00, Data2: 0x00, Data3: 0x00, Data4: []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}}
 )
 
-func WmiDemo() (result interface{}) {
-
-	timeout := 30 * time.Second
-	logger := zerolog.New(os.Stdout).Level(zerolog.Disabled)
-
-	ctx := gssapi.NewSecurityContext(context.Background())
-
-	cc, err := dcerpc.Dial(ctx, net.JoinHostPort(os.Getenv("SERVER"), "135"),
-		dcerpc.WithLogger(logger),
-		dcerpc.WithTimeout(timeout))
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "dial_well_known_endpoint", err)
-		return
-	}
-
-	defer cc.Close(ctx)
-
-	// new object exporter client.
-	cli, err := iobjectexporter.NewObjectExporterClient(ctx, cc, dcerpc.WithSign(), dcerpc.WithTargetName(os.Getenv("TARGET")))
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "new_object_exporter", err)
-		return
-	}
-
-	// server-alive to determine the bindings.
-	srv, err := cli.ServerAlive2(ctx, &iobjectexporter.ServerAlive2Request{})
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "server_alive2", err)
-		return
-	}
-
-	// new activation-client.
-	iact, err := iactivation.NewActivationClient(ctx, cc, dcerpc.WithSign(), dcerpc.WithTargetName(os.Getenv("TARGET")))
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "new_activation_client", err)
-		return
-	}
-
-	// activate the WMI interface.
-	act, err := iact.RemoteActivation(ctx, &iactivation.RemoteActivationRequest{
-		ORPCThis: &dcom.ORPCThis{Version: srv.COMVersion},
-		ClassID:  wmi.Level1LoginClassID.GUID(),
-		IIDs:     []*dcom.IID{iwbemlevel1login.Level1LoginIID},
-		// for TCP/IP it must be []uint16{7} / for named pipes: []uint16{15}.
-		RequestedProtocolSequences: []uint16{7, 15},
-	})
-
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "remote_activation", err)
-		return
-	}
-
-	if act.HResult != 0 {
-		fmt.Fprintln(os.Stderr, hresult.FromCode(uint32(act.HResult)))
-		return
-	}
-
-	return
-}
-
-// dcerpc.WithAbstractSyntax(ObjectExporterSyntaxV0_0))
-
-func Introspect() (result interface{}) {
-
-	ctx := gssapi.NewSecurityContext(context.Background())
-
-	a := iobjectexporter.ObjectExporterSyntaxV0_0
-	// op := dcerpc.WithAbstractSyntax(a)
-
-	p := dcerpc.NewPresentation(a)
-
-	// ndr := p.TransferEncoding()(nil, ndr.NewWaitChunk())
-
-	b := iobjectexporter.ResolveOXIDRequest{}
-	err := b.MarshalNDR(ctx, p.TransferEncoding()(nil))
-
-	fmt.Println(err)
-	fmt.Println(b)
-	cr := wcce.CertRequestD2{}
-	err = cr.MarshalNDR(ctx, p.TransferEncoding()(nil))
-
-	fmt.Println(err)
-
-	fmt.Println(cr.InterfacePointer().IPID())
-	// iremunknown2.
-
-	// a.
-
-	return
-}
-
 func NewGUID() *dcom.CID {
 	b := make([]byte, 16)
 	_, err := rand.Read(b)
 	if err != nil {
-		panic(err) // Handle error appropriately in production
+		panic(err)
 	}
 
 	// Version 4 UUID - Set version bits
@@ -239,17 +138,10 @@ func NewActivationProperty(classId *dcom.ClassID, property Marshable) Activation
 	}
 }
 
-// /home/cory/workspace/go-msrpc/msrpc/dcom/wmio/wmio.go
-
-func IssueCertificate() (result interface{}) {
+func CertRequestPing() (result interface{}) {
 
 	ctx := gssapi.NewSecurityContext(context.Background())
 
-	// em := epm.EndpointMapper(ctx, os.Getenv("SERVER"))
-
-	// dcerpc.WithEndpointMapper(em)
-
-	// em.
 	logger := zerolog.New(os.Stdout).Level(zerolog.Disabled)
 
 	cc, err := dcerpc.Dial(ctx, net.JoinHostPort(os.Getenv("SERVER"), "135"), dcerpc.WithLogger(logger))
@@ -258,8 +150,6 @@ func IssueCertificate() (result interface{}) {
 		return
 	}
 	defer cc.Close(ctx)
-
-	// cc.
 
 	oec, err := iobjectexporter.NewObjectExporterClient(ctx, cc, dcerpc.WithSign())
 	if err != nil {
@@ -279,8 +169,6 @@ func IssueCertificate() (result interface{}) {
 		return
 	}
 	defer cc.Close(ctx)
-
-	// dcerpc.WithCredentials(credential.NewFromPassword(os.Getenv("USERNAME"), os.Getenv("PASSWORD")))
 
 	irac, err := iremotescmactivator.NewRemoteSCMActivatorClient(ctx, cc, dcerpc.WithSign())
 	if err != nil {
