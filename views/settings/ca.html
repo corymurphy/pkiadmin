@@ -1,0 +1,103 @@
+{{ define "content" }}
+<section class="table-components" style="padding-top: 15px; padding-left: 30px; padding-right: 30px;">
+  <div class="my-3 p-3 bg-body rounded shadow-sm">
+    <h6 class="border-bottom pb-2 mb-2">Certificate Authorities</h6>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Id</th>
+          <th scope="col">Name</th>
+          <th scope="col">Server</th>
+          <th scope="col">Username</th>
+          <th scope="col">Password</th>
+          <th scope="col">Status</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody id="ca-table">
+        {{range $item := .CertificateAuthorities }}
+        <tr id="ca-{{ .ID }}">
+          <th scope="row">{{ .ID }}</th>
+          <td>{{ .Name }}</td>
+          <td>{{ .Server }}</td>
+          <td>{{ .Username }}</td>
+          <td>{{ .Password }}</td>
+          <td>
+
+            <div hx-get="/ca/status/{{ .ID }}" hx-trigger="load delay:1s">
+              <div class="chakra-stack css-16vr4dd">
+                <span class="chakra-badge css-oqjyxw">
+                  <div class="chakra-stack css-18e1wj0">
+                    <div class="css-6jcppe">
+                      <div class="css-0">
+                        <div class="css-jyhuqh"></div>
+                      </div>
+                      <div class="css-xi606m">
+                        <div class="chakra-stack css-1hohgv6">
+                          <p style="margin:0;" class="chakra-text css-zylzbl">Pending</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </span>
+              </div>
+            </div>
+
+          </td>
+          <td>
+            <div class="d-flex gap-1 action">
+              <button hx-indicator="#cai-{{ .ID }}" class="text-danger" hx-target="#ca-{{ .ID }}"
+                hx-delete="/ca/{{ .ID }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                  class="bi bi-trash-fill" viewBox="0 0 16 16">
+                  <path
+                    d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
+                </svg>
+              </button>
+              <div id="cai-{{ .ID }}" class="htmx-indicator spinner-border text-light d-flex align-items-center"
+                style="width: 1.35rem; height: 1.35rem; margin: auto 0;" role="status">
+                <span class="visually-hidden">loading</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+      <tfoot>
+        <form id="ca-form" hx-post="/settings/ca">
+          <tr id="ca-{{ .ID }}">
+            <th scope="row"></th>
+            <td>
+              <input type="text" class="form-control" name="name" placeholder="Root Authority" value="" required>
+            </td>
+            <td>
+              <input type="text" class="form-control" name="server" placeholder="ca.internal" value="" required>
+            </td>
+            <td>
+              <input type="text" class="form-control" name="username" placeholder="username" value="" required>
+            </td>
+            <td>
+              <input type="text" class="form-control" name="password" placeholder="password" value="" required>
+            </td>
+            <td>
+
+            </td>
+            <td>
+              <div class="action">
+                <button class="text-success" type="submit">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                    class="bi bi-plus-circle-fill" viewBox="0 0 16 16">
+                    <path
+                      d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3z" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </form>
+      </tfoot>
+    </table>
+  </div>
+</section>
+
+{{ end }}

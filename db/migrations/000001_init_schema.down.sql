@@ -1,4 +1,10 @@
+DROP TABLE IF EXISTS certificate_contents;
 DROP TABLE IF EXISTS certificate_cryptographic_api;
 DROP TABLE IF EXISTS signing_request_api;
 DROP TABLE IF EXISTS cipher_algorithm;
 DROP TABLE IF EXISTS certificate_requests;
+DROP TABLE IF EXISTS certificate_authorities;
+DROP TABLE IF EXISTS credentials;
+DROP TABLE IF EXISTS scheduler_scheduledset;
+DROP TABLE IF EXISTS scheduler_inprogressset;
+DROP TABLE IF EXISTS scheduler_queue;

@@ -25,6 +25,7 @@ go.work.sum
 .env
 node_modules
 
+.data
 examples
 pkiadmin.db
 tmp

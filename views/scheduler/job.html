@@ -1,0 +1,66 @@
+{{ define "content" }}
+<section class="table-components" style="padding-top: 15px; padding-left: 30px; padding-right: 30px;">
+  <div class="my-3 p-3 bg-body rounded shadow-sm">
+
+
+    <div class="row">
+      <div class="col-md-2">
+        <img src="/images/certification-128.png" width="70px" height="70px">
+        <button type="button" id="showCertificateDownloadOptionsButton" class="btn btn-primary btn-sm"
+          style="margin-top:20px; display:block;"><i class="fa fa-download"></i> Download</button>
+      </div>
+
+      <div class="col-md-10">
+
+        <h5 class="mb-2" id="displayName">{{ .DisplayName.String }}</h5>
+
+        <table class="table table-borderless table-sm table-striped">
+          <tr>
+            <th style="text-align: right; width: 160px" scope="row" >Id</th>
+            <td id="certificate-id">{{ .ID }}</td>
+
+          </tr>
+          <tr>
+            <th style="text-align: right;">Thumbprint</th>
+            <td id="thumbprint"></td>
+          </tr>
+
+
+          <tr>
+            <th style="text-align: right;">Hash Algorithm</th>
+            <td id="hashAlgorithm">{{ .HashAlgorithm.String }}</td>
+          </tr>
+          <tr>
+            <th style="text-align: right;">Cipher Algorithm</th>
+            <td id="cipherAlgorithm">{{ .CipherAlgorithm.String }}</td>
+          </tr>
+          <tr>
+            <th style="text-align: right;">Has PrivateKey</th>
+            <td id="hasPrivateKey">false</td>
+          </tr>
+          <tr>
+            <th style="text-align: right;">Expires</th>
+            <td id="expires"></td>
+          </tr>
+          <tr>
+            <th style="text-align: right;">Windows Api</th>
+            <td id="windowsApi">{{ .CertificateCryptographicApi.String }}</td>
+          </tr>
+          <tr>
+            <th style="text-align: right;">Key Length</th>
+            <td id="keySize">{{ .KeyLength.Int64 }}</td>
+          </tr>
+          <tr>
+            <th style="text-align: right;">Signing Request API</th>
+            <td id="storageFormat">{{ .SigningRequestApi.String }}</td>
+          </tr>
+
+        </table>
+      </div>
+
+    </div>
+
+
+  </div>
+</section>
+{{ end }}

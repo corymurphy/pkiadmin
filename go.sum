@@ -57,8 +57,8 @@ github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWE
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-sqlite3 v1.14.24 h1:tpSp2G2KyMnnQu99ngJ47EIkWVmliIizyZBfPrBWDRM=
 github.com/mattn/go-sqlite3 v1.14.24/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
-github.com/oiweiwei/go-msrpc v1.1.1 h1:QhWTLSFFC+2weuymZsjsHmY/LaaVg3fdTmyn/2ZQHLM=
-github.com/oiweiwei/go-msrpc v1.1.1/go.mod h1:AiQkqNul+mAkvjlI8lla2q7aJCgQ47+PnJubD/d5Tak=
+github.com/oiweiwei/go-msrpc v1.1.4-0.20250202231428-f2f5dad644ab h1:fPbkEJQsE5idALI/rfQ0kv3y/YltOFz7HcbYBDxPuQI=
+github.com/oiweiwei/go-msrpc v1.1.4-0.20250202231428-f2f5dad644ab/go.mod h1:AiQkqNul+mAkvjlI8lla2q7aJCgQ47+PnJubD/d5Tak=
 github.com/oiweiwei/go-smb2.fork v0.0.0-20241220141821-a5dd82e09d5f h1:IETUC4J3re2E3/4on55u4eKiD66+sd92sQkEwjWMIsU=
 github.com/oiweiwei/go-smb2.fork v0.0.0-20241220141821-a5dd82e09d5f/go.mod h1:h0CzLVvGAmq39izdYVHKyI5cLv6aHdbQAMKEe4dz4N8=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

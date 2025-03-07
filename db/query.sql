@@ -132,6 +132,8 @@ SELECT id,
       display_name,
       signing_algorithm,
       key_length,
+      status,
+      status_message,
       requested_on,
       certificate_cryptographic_api_id,
       signing_request_api_id,
@@ -145,6 +147,8 @@ SELECT r.id AS id,
       r.display_name AS display_name,
       r.key_length AS key_length,
       r.requested_on AS requested_on,
+      r.status AS status,
+      r.status_message AS status_message,
       h.name AS hash_algorithm,
       c.name AS cipher_algorithm,
       s.name AS signing_request_api,
@@ -161,6 +165,8 @@ SELECT id,
       display_name,
       signing_algorithm,
       key_length,
+      status,
+      status_message,
       requested_on,
       certificate_cryptographic_api_id,
       signing_request_api_id,
@@ -174,6 +180,8 @@ SELECT r.id AS id,
       r.display_name AS display_name,
       r.key_length AS key_length,
       r.requested_on AS requested_on,
+      r.status AS status,
+      r.status_message AS status_message,
       h.name AS hash_algorithm,
       c.name AS cipher_algorithm,
       s.name AS signing_request_api,
@@ -190,16 +198,405 @@ INSERT INTO certificate_requests (
       display_name,
       signing_algorithm,
       key_length,
+      status,
+      status_message,
       requested_on,
       certificate_cryptographic_api_id,
       signing_request_api_id,
       cipher_algorithm_id,
       hash_algorithm_id
 ) VALUES (
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+)
+RETURNING id;
+
+-- name: GetCertificateRequestWithContent :one
+SELECT r.id AS id,
+      r.display_name AS display_name,
+      r.key_length AS key_length,
+      r.requested_on AS requested_on,
+      r.status AS status,
+      r.status_message AS status_message,
+      h.name AS hash_algorithm,
+      c.name AS cipher_algorithm,
+      s.name AS signing_request_api,
+      capi.name as certificate_cryptographic_api,
+      cc.csr AS csr,
+      cc.private_key AS private_key,
+      cc.public_key AS public_key
+FROM certificate_requests r
+INNER JOIN hash_algorithm h ON r.hash_algorithm_id = h.id
+INNER JOIN cipher_algorithm c ON r.cipher_algorithm_id = c.id
+INNER JOIN signing_request_api s ON r.signing_request_api_id = s.id
+INNER JOIN certificate_cryptographic_api capi ON r.certificate_cryptographic_api_id = capi.id
+INNER JOIN certificate_contents cc ON r.certificate_contents_id = cc.id
+WHERE r.id = ? LIMIT 1;
+
+-- name: DeleteCertificateRequest :exec
+DELETE FROM certificate_requests
+WHERE id = ?;
+
+-- name: UpdateCertificateRequestStatus :exec
+UPDATE certificate_requests
+set status = ?, status_message = ?
+WHERE id = ?;
+
+-- name: UpdateCertificateRequestContentId :exec
+UPDATE certificate_requests
+set certificate_contents_id = ?
+WHERE id = ?;
+
+--------------------------------------------
+-- certificate_authorities
+--------------------------------------------
+
+-- name: GetCertificateAuthority :one
+SELECT ca.id AS id,
+      ca.name,
+      ca.server,
+      c.username AS username,
+      c.password AS password,
+      c.id AS credential_id
+FROM certificate_authorities ca
+INNER JOIN credentials c ON ca.credential_id = c.id
+WHERE ca.id = ? LIMIT 1;
+
+-- name: CreateCertificateAuthority :one
+INSERT INTO certificate_authorities (
+  name,
+  server,
+  credential_id
+) VALUES (
+  ?, ?, ?
+)
+RETURNING id;
+
+-- name: ListCertificateAuthorities :many
+SELECT ca.id AS id,
+      ca.name,
+      ca.server,
+      c.username AS username,
+      c.password AS password,
+      c.id AS credential_id
+FROM certificate_authorities ca
+INNER JOIN credentials c ON ca.credential_id = c.id;
+
+-- name: UpdateCertificateAuthority :exec
+UPDATE certificate_authorities
+set name = ?, server = ?
+WHERE id = ?;
+
+-- name: DeleteCertificateAuthority :exec
+DELETE FROM certificate_authorities
+WHERE id = ?;
+
+--------------------------------------------
+-- credentials
+--------------------------------------------
+-- name: GetCredential :one
+SELECT id, username, password FROM credentials
+WHERE id = ? LIMIT 1;
+
+-- name: CreateCredential :one
+INSERT INTO credentials (
+  username,
+  password
+) VALUES (
+  ?, ?
+)
+RETURNING id;
+
+-- name: ListCredentials :many
+SELECT id, username, password FROM credentials;
+
+-- name: UpdateCredential :exec
+UPDATE credentials
+set username = ?, password = ?
+WHERE id = ?;
+
+-- name: DeleteCredential :exec
+DELETE FROM credentials
+WHERE id = ?;
+
+--------------------------------------------
+-- scheduler_scheduledset
+--------------------------------------------
+-- name: GetScheduledSet :one
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  perform_at,
+  processor,
+  arguments
+FROM scheduler_scheduledset
+WHERE id = ? LIMIT 1;
+
+-- name: CreateScheduledSet :one
+INSERT INTO scheduler_scheduledset (
+  id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  perform_at,
+  processor,
+  arguments
+) VALUES (
   ?, ?, ?, ?, ?, ?, ?, ?
 )
 RETURNING id;
 
--- name: DeleteCertificateRequest :exec
-DELETE FROM certificate_requests
+-- name: ListScheduledSet :many
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  perform_at,
+  processor,
+  arguments
+FROM scheduler_scheduledset;
+
+-- name: ListScheduledSetShouldPerform :many
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  perform_at,
+  processor,
+  arguments
+FROM scheduler_scheduledset
+WHERE perform_at <= datetime('now');
+
+-- name: DeleteScheduledSet :exec
+DELETE FROM scheduler_scheduledset
+WHERE id = ?;
+
+-- name: CountScheduledSet :one
+SELECT COUNT(*) as count FROM scheduler_scheduledset;
+
+--------------------------------------------
+-- scheduler_inprogressset
+--------------------------------------------
+
+-- name: GetInProgressSet :one
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments
+FROM scheduler_inprogressset
+WHERE id = ? LIMIT 1;
+
+-- name: CreateInProgressSet :one
+INSERT INTO scheduler_inprogressset (
+  id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments
+) VALUES (
+  ?, ?, ?, ?, ?, ?, ?
+)
+RETURNING id;
+
+-- name: ListInProgressSet :many
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments
+FROM scheduler_inprogressset;
+
+-- name: DeleteInProgressSet :exec
+DELETE FROM scheduler_inprogressset
+WHERE id = ?;
+
+-- name: CountInProgressSet :one
+SELECT COUNT(*) as count FROM scheduler_inprogressset;
+
+--------------------------------------------
+-- scheduler_queue
+--------------------------------------------
+
+-- name: GetSchedulerQueueJob :one
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments
+FROM scheduler_queue
+WHERE id = ? LIMIT 1;
+
+-- name: GetOneSchedulerQueueJob :one
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments
+FROM scheduler_queue
+ORDER BY id
+LIMIT 1;
+
+-- name: CreateSchedulerQueueJob :one
+INSERT INTO scheduler_queue (
+  id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments
+) VALUES (
+  ?, ?, ?, ?, ?, ?, ?
+)
+RETURNING id;
+
+-- name: ListSchedulerQueueJobs :many
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments
+FROM scheduler_queue;
+
+-- name: DeleteSchedulerQueueJob :exec
+DELETE FROM scheduler_queue
+WHERE id = ?;
+
+-- name: CountSchedulerQueueJob :one
+SELECT COUNT(*) as count FROM scheduler_queue;
+
+--------------------------------------------
+-- scheduler_failed
+--------------------------------------------
+
+-- name: GetFailedJob :one
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments
+FROM scheduler_queue
+WHERE id = ? LIMIT 1;
+
+-- name: CreateFailedJob :one
+INSERT INTO scheduler_failed (
+  id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments,
+  log
+) VALUES (
+  ?, ?, ?, ?, ?, ?, ?, ?
+)
+RETURNING id;
+
+-- name: ListFailedJobs :many
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments,
+  log
+FROM scheduler_failed;
+
+-- name: DeleteFailedJob :exec
+DELETE FROM scheduler_failed
+WHERE id = ?;
+
+-- name: CountFailedJob :one
+SELECT COUNT(*) as count FROM scheduler_failed;
+
+--------------------------------------------
+-- scheduler_completed
+--------------------------------------------
+
+-- name: GetCompletedJob :one
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments
+FROM scheduler_completed
+WHERE id = ? LIMIT 1;
+
+-- name: CreateCompletedJob :one
+INSERT INTO scheduler_completed (
+  id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments,
+  log
+) VALUES (
+  ?, ?, ?, ?, ?, ?, ?, ?
+)
+RETURNING id;
+
+-- name: ListCompletedJobs :many
+SELECT id,
+  retry,
+  retry_count,
+  created_at,
+  enqueued_at,
+  processor,
+  arguments,
+  log
+FROM scheduler_completed;
+
+-- name: DeleteCompletedJob :exec
+DELETE FROM scheduler_completed
+WHERE id = ?;
+
+-- name: CountCompletedJob :one
+SELECT COUNT(*) as count FROM scheduler_completed;
+
+--------------------------------------------
+-- certificate_contents
+--------------------------------------------
+
+-- name: GetCertificateContent :one
+SELECT id, csr, private_key, public_key
+FROM certificate_contents
+WHERE id = ? LIMIT 1;
+
+-- name: CreateCertificateContentCsr :one
+INSERT INTO certificate_contents (
+  csr,
+  private_key
+) VALUES (
+  ?, ?
+)
+RETURNING id;
+
+-- name: UpdateCertificateContentPublicKey :exec
+UPDATE certificate_contents
+set public_key = ?
 WHERE id = ?;

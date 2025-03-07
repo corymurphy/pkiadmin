@@ -1,9 +1,14 @@
 version: "2"
 sql:
-  - engine: "sqlite"
-    queries: "db\\query.sql"
-    schema: "db\\schema.sql"
-    gen:
-      go:
-        package: "repo"
-        out: "pkg\\repo"
+- engine: sqlite
+  queries: db/query.sql
+  schema: db/schema.sql
+  gen:
+    go:
+      package: repo
+      out: pkg/repo
+      overrides:
+        - db_type: "uuid"
+          go_type:
+            import: "github.com/google/uuid"
+            type: "UUID"

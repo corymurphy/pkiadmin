@@ -48,10 +48,30 @@ https://tableplus.com/blog/2019/10/tableplus-linux-installation.html
 https://examples.bootstrap-table.com/#welcome.html
 https://github.com/golang-migrate/migrate
 
+https://themurph.hashnode.dev/go-beyond-the-basics-mastering-toast-notifications-with-go-and-htmx
+
 
 ## setup
 
 ```shell
 .\migrate.exe create -ext sql -dir db/migration -seq init_schema
 
+migrate create -ext sql -dir db/migrations -seq init_schema
+
+# generate sql
+
+docker run --rm -v $(pwd):/src -w /src sqlc/sqlc generate
+
+```
+
+## html stuff
+
+https://stackoverflow.com/questions/27015025/badges-for-buttons-using-html-and-css
+https://www.w3schools.com/howto/tryit.asp?filename=tryhow_css_buttons_notification
+
+## todo
+
+```go
+//go:embed migration/*/*.sql
+var migrationFS embed.FS
 ```

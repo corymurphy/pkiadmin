@@ -3,6 +3,7 @@ package views
 import (
 	"embed"
 	"io"
+	"strings"
 	"text/template"
 
 	"github.com/labstack/echo/v4"
@@ -111,13 +112,18 @@ func (t *TemplateRegistry) Render(w io.Writer, name string, data interface{}, c 
 		return tmpl.ExecuteTemplate(w, "error", data)
 	}
 
+	// TODO this needs to be better
+	if !strings.HasSuffix(name, ".html") {
+		return t.templates[name].ExecuteTemplate(w, name, data)
+	}
+
 	return t.templates[name].ExecuteTemplate(w, "layout.html", data)
 }
 
-func (t *TemplateRegistry) Register(name string) {
+func (t *TemplateRegistry) Register(name string, functions template.FuncMap) {
 	// t.templates[name] = template.Must()
 
-	parsed, err := template.New(name).ParseFS(views, "sidebar.html", "header.html", "layout.html", name)
+	parsed, err := template.New(name).Funcs(functions).ParseFS(views, "sidebar.html", "header.html", "layout.html", name)
 
 	if err != nil {
 		panic(err)
@@ -129,7 +135,11 @@ func (t *TemplateRegistry) Register(name string) {
 	// t.templates[name] = template.New("layout.html").ParseFS(files, "sidebar.html", "header.html", "layout.html", file))
 }
 
-func NewTemplates(views []string) *TemplateRegistry {
+func (t *TemplateRegistry) Add(tmpl *template.Template) {
+	t.templates[tmpl.Name()] = tmpl
+}
+
+func NewTemplates(views []string, partials []string, functions template.FuncMap) *TemplateRegistry {
 	// templates := make(map[string]*template.Template)
 
 	templates := &TemplateRegistry{
@@ -137,8 +147,27 @@ func NewTemplates(views []string) *TemplateRegistry {
 	}
 
 	for _, view := range views {
-		templates.Register(view)
+		templates.Register(view, functions)
 	}
+
+	for _, partial := range partials {
+
+		tmpl := template.Must(template.ParseGlob(partial)).Funcs(functions)
+
+		// fmt.Println(tmpl.Name())
+
+		// tmpl.DefinedTemplates()
+		for _, in := range tmpl.Templates() {
+			templates.Add(in)
+		}
+
+		// templates.Add(tmpl)
+
+	}
+
+	// fmt.Println(templates)
+
+	// template.Must(template.ParseGlob("views/*.html"))
 
 	return templates
 	// return &Template{

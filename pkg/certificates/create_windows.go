@@ -3,6 +3,7 @@
 package certificates
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/corymurphy/pkiadmin/pkg/adcs"
@@ -21,37 +22,11 @@ var (
 	X509_INSTALL_PASSWORD                             = ""
 )
 
-// typedef enum EncodingType {
-// 	XCN_CRYPT_STRING_BASE64HEADER = 0,
-// 	XCN_CRYPT_STRING_BASE64 = 0x1,
-// 	XCN_CRYPT_STRING_BINARY = 0x2,
-// 	XCN_CRYPT_STRING_BASE64REQUESTHEADER = 0x3,
-// 	XCN_CRYPT_STRING_HEX = 0x4,
-// 	XCN_CRYPT_STRING_HEXASCII = 0x5,
-// 	XCN_CRYPT_STRING_BASE64_ANY = 0x6,
-// 	XCN_CRYPT_STRING_ANY = 0x7,
-// 	XCN_CRYPT_STRING_HEX_ANY = 0x8,
-// 	XCN_CRYPT_STRING_BASE64X509CRLHEADER = 0x9,
-// 	XCN_CRYPT_STRING_HEXADDR = 0xa,
-// 	XCN_CRYPT_STRING_HEXASCIIADDR = 0xb,
-// 	XCN_CRYPT_STRING_HEXRAW = 0xc,
-// 	XCN_CRYPT_STRING_BASE64URI = 0xd,
-// 	XCN_CRYPT_STRING_ENCODEMASK = 0xff,
-// 	XCN_CRYPT_STRING_CHAIN = 0x100,
-// 	XCN_CRYPT_STRING_TEXT = 0x200,
-// 	XCN_CRYPT_STRING_PERCENTESCAPE = 0x8000000,
-// 	XCN_CRYPT_STRING_HASHDATA = 0x10000000,
-// 	XCN_CRYPT_STRING_STRICT = 0x20000000,
-// 	XCN_CRYPT_STRING_NOCRLF = 0x40000000,
-// 	XCN_CRYPT_STRING_NOCR = 0x80000000
-//   } ;
+var j = func(data any) string { b, _ := json.MarshalIndent(data, "", "  "); return string(b) }
 
-// typedef enum InstallResponseRestrictionFlags {
-// 	AllowNone = 0,
-// 	AllowNoOutstandingRequest = 0x1,
-// 	AllowUntrustedCertificate = 0x2,
-// 	AllowUntrustedRoot = 0x4
-// } ;
+func CertRequestPing() (result interface{}) {
+	return
+}
 
 func IssueCertificate() interface{} {
 	var err error
@@ -174,7 +149,7 @@ func IssueCertificate() interface{} {
 		return fmt.Sprintf("error result 12: %v", err)
 	}
 
-	ca := adcs.NewCertificateAuthorityOle("Lab Root Authority", "certmgr-adds.lab2.internal")
+	ca := adcs.NewAdcsCertificateAuthority("Lab Root Authority", "certmgr-adds.lab2.internal", "", "")
 	issued, err := ca.Submit(csr.ToString(), "ServerAuthentication-CngRsa")
 	// response += fmt.Sprintf("<p>ca submit result %s</p>", result.ToString())
 

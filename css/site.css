@@ -1,48 +1,188 @@
 .main-wrapper {
-    -webkit-transition: all 0.3s ease-out 0s;
-    -moz-transition: all 0.3s ease-out 0s;
-    -ms-transition: all 0.3s ease-out 0s;
-    -o-transition: all 0.3s ease-out 0s;
-    transition: all 0.3s ease-out 0s;
-    margin-left: 280px;
-    min-height: 100vh;
-    padding-bottom: 85px;
-    position: relative;
-    /* background-color: var(--bs-body-bg); */
-    /* background-color: var(--bs-tertiary-bg); */
+  -webkit-transition: all 0.3s ease-out 0s;
+  -moz-transition: all 0.3s ease-out 0s;
+  -ms-transition: all 0.3s ease-out 0s;
+  -o-transition: all 0.3s ease-out 0s;
+  transition: all 0.3s ease-out 0s;
+  margin-left: 280px;
+  min-height: 100vh;
+  padding-bottom: 85px;
+  position: relative;
+  /* background-color: var(--bs-body-bg); */
+  /* background-color: var(--bs-tertiary-bg); */
 }
 
 main {
-    display: block;
-    unicode-bidi: isolate;
+  display: block;
+  unicode-bidi: isolate;
 }
 
 .sidebar-nav-wrapper {
-    position: absolute;
-    left: 0;
+  position: absolute;
+  left: 0;
 }
 
 .content {
-    margin-left: 280px;
-    min-height: 100vh;
-    padding-bottom: 85px;
-    background-color: var(--bs-dark-bg-subtle);
+  margin-left: 280px;
+  min-height: 100vh;
+  padding-bottom: 85px;
+  background-color: var(--bs-dark-bg-subtle);
 }
 
 .justify-content-between {
-    -webkit-box-pack: justify !important;
-    -ms-flex-pack: justify !important;
-    justify-content: space-between !important;
+  -webkit-box-pack: justify !important;
+  -ms-flex-pack: justify !important;
+  justify-content: space-between !important;
 }
 
 .main .container-fluid {
-    padding-left: 40px;
-    padding-right: 40px;
+  padding-left: 40px;
+  padding-right: 40px;
 }
 
 .table .action button {
-    border: none;
-    background: transparent;
-    padding: 0px 6px;
-    font-size: 18px;
+  border: none;
+  background: transparent;
+  padding: 0px 6px;
+  font-size: 18px;
+}
+
+
+.notification {
+  /* background-color: #555; */
+  /* color: white; */
+  /* text-decoration: none; */
+  padding: 15px 26px;
+  position: relative;
+  display: inline-block;
+  border-radius: 2px;
+}
+
+.badge2 {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  padding: 5px 10px;
+  border-radius: 50%;
+  background-color: red;
+  color: white;
+}
+
+
+
+
+/* TODO this is just a copy paste fix this */
+
+.css-oqjyxw {
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: middle;
+  padding-inline: 12px;
+  text-transform: capitalize;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.80);
+  box-shadow: var(--badge-shadow);
+  padding-top: 6px;
+  padding-bottom: 6px;
+  background-color: #2c2d31;
+  height: min-content;
+}
+
+.css-18e1wj0 {
+  display: flex;
+  -moz-box-align: center;
+  align-items: center;
+  flex-direction: column;
+  gap: var(--chakra-space-1);
+}
+
+.css-6jcppe {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  -moz-box-align: center;
+  align-items: center;
+  width: 100%;
+}
+
+.css-1xc4fct {
+  background-color: #5eb817;
+  border-radius: 50%;
+  display: inline-block;
+  height: 8px;
+  margin-right: 0.5rem;
+  width: 8px;
+}
+
+.css-xi606m {
+  text-align: center;
+}
+
+.css-zylzbl {
+  line-height: 22px;
+  flex: 1 1 0%;
+  font-size: 0.625rem;
+}
+
+.css-16vr4dd {
+  display: flex;
+  -moz-box-align: center;
+  align-items: center;
+  flex-flow: wrap;
+  gap: 0.25rem;
+  max-width: 35em;
+}
+
+.css-zylzbl {
+  line-height: 22px;
+  flex: 1 1 0%;
+  font-size: 0.625rem;
+}
+
+.css-5dfj4m {
+  background-color: rgba(220,53,69,1);
+  border-radius: 50%;
+  display: inline-block;
+  height: 8px;
+  margin-right: 0.5rem;
+  width: 8px;
+}
+
+.css-jyhuqh {
+  background-color: #d7a936;
+  border-radius: 50%;
+  display: inline-block;
+  height: 8px;
+  margin-right: 0.5rem;
+  width: 8px;
+}
+
+
+/* foldable table */
+
+table.fold-table > tbody > tr.view {
+  transition: all 0.3s ease;
+}
+
+table.fold-table > tbody > tr.fold {
+  display: none;
+}
+table.fold-table > tbody > tr.fold.open {
+  display: table-row;
+}
+
+.fold-content {
+  padding: 0.5em;
+}
+.fold-content h3 {
+  margin-top: 0;
+}
+
+table.fold-table > tbody > tr.open * div.toggle * svg.bi-plus {
+  display: none;
+}
+
+table.fold-table > tbody > :not(tr.open) * div.toggle * svg.bi-dash {
+  display: none;
 }

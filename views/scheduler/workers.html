@@ -1,0 +1,44 @@
+{{ define "content" }}
+<section class="table-components" style="padding-top: 15px; padding-left: 30px; padding-right: 30px;">
+  <div class="my-3 p-3 bg-body rounded shadow-sm">
+    <h6 class="border-bottom pb-2 mb-2">Workers</h6>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Id</th>
+          <th scope="col">Ready</th>
+          <th scope="col">Busy</th>
+          <th scope="col">Registered Jobs</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range $item := .Workers }}
+        <tr id="worker-{{ .Id }}">
+          <th scope="row">{{ .Id }}</th>
+          <td>{{ .IsReady }}</td>
+          <td>{{ .IsBusy }}</td>
+          <td>
+            {{ range $job := .RegisteredJobs }}
+            <p> {{ $job }} </p>
+            {{ end}}
+          </td>
+          <td>
+            <div class="action">
+              <button class="text-danger" hx-target="#worker-{{ .Id }}" hx-delete="/scheduler/worker/{{ .Id }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                  class="bi bi-trash-fill" viewBox="0 0 16 16">
+                  <path
+                    d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{{ end }}
