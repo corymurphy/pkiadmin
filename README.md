@@ -37,4 +37,3 @@ docker run --rm -v $(pwd):/src -w /src sqlc/sqlc generate
 * [] implement search
 * [x] build job scheduling system
 * [x] issue certs using adcs from linux
-s
