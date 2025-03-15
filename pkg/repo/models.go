@@ -19,10 +19,13 @@ type CertificateAuthority struct {
 }
 
 type CertificateContent struct {
-	ID         int64
-	Csr        []byte
-	PrivateKey []byte
-	PublicKey  []byte
+	ID                   int64
+	Name                 string
+	Encoding             string
+	Content              []byte
+	UpdatedAt            time.Time
+	CreatedAt            time.Time
+	CertificateRequestID int64
 }
 
 type CertificateCryptographicApi struct {
@@ -43,7 +46,15 @@ type CertificateRequest struct {
 	SigningRequestApiID           sql.NullInt64
 	CipherAlgorithmID             sql.NullInt64
 	HashAlgorithmID               sql.NullInt64
-	CertificateContentsID         sql.NullInt64
+}
+
+type CertificateRequestsTimeline struct {
+	ID                   int64
+	CertificateRequestID int64
+	Event                int64
+	Status               int64
+	UpdatedAt            time.Time
+	CreatedAt            time.Time
 }
 
 type CipherAlgorithm struct {

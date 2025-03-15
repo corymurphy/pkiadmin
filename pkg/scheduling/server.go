@@ -196,6 +196,12 @@ func (s *Server) Run() error {
 			continue
 		}
 
+		args, err := json.Marshal(result.args)
+		if err != nil {
+			result.output = result.output + fmt.Sprintf("\n[Server] error marshalling args: %v\n", err)
+			args = []byte{}
+		}
+
 		if !result.metadata.Retry || result.metadata.RetryCount >= 4 {
 			_, err := s.queue.queries.CreateFailedJob(ctx, repo.CreateFailedJobParams{
 				ID:         result.metadata.Id,
@@ -203,6 +209,7 @@ func (s *Server) Run() error {
 				RetryCount: result.metadata.RetryCount,
 				CreatedAt:  result.metadata.CreatedAt,
 				Processor:  result.args.Kind(),
+				Arguments:  args,
 				Log:        result.output,
 			})
 			if err != nil {
@@ -211,7 +218,7 @@ func (s *Server) Run() error {
 			continue
 		}
 
-		err := s.queue.EnqueueJob(
+		err = s.queue.EnqueueJob(
 			ctx,
 			time.Now().Add(10*time.Second),
 			&Job{
@@ -225,7 +232,6 @@ func (s *Server) Run() error {
 		if err != nil {
 			fmt.Println("error enqueuing job", err)
 		}
-
 	}
 
 	return nil

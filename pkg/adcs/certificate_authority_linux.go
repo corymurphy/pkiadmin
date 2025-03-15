@@ -41,8 +41,6 @@ var (
 	SessionIDAnyLoginSession = uint32(0xffffffff)
 )
 
-type AdcsCertificateAuthorityOption func(*AdcsCertificateAuthority)
-
 // func WithPort(port string) AdcsCertificateAuthorityOption {
 // 	return func(ca *AdcsCertificateAuthority) {
 // 		ca.Port = port

@@ -210,28 +210,6 @@ INSERT INTO certificate_requests (
 )
 RETURNING id;
 
--- name: GetCertificateRequestWithContent :one
-SELECT r.id AS id,
-      r.display_name AS display_name,
-      r.key_length AS key_length,
-      r.requested_on AS requested_on,
-      r.status AS status,
-      r.status_message AS status_message,
-      h.name AS hash_algorithm,
-      c.name AS cipher_algorithm,
-      s.name AS signing_request_api,
-      capi.name as certificate_cryptographic_api,
-      cc.csr AS csr,
-      cc.private_key AS private_key,
-      cc.public_key AS public_key
-FROM certificate_requests r
-INNER JOIN hash_algorithm h ON r.hash_algorithm_id = h.id
-INNER JOIN cipher_algorithm c ON r.cipher_algorithm_id = c.id
-INNER JOIN signing_request_api s ON r.signing_request_api_id = s.id
-INNER JOIN certificate_cryptographic_api capi ON r.certificate_cryptographic_api_id = capi.id
-INNER JOIN certificate_contents cc ON r.certificate_contents_id = cc.id
-WHERE r.id = ? LIMIT 1;
-
 -- name: DeleteCertificateRequest :exec
 DELETE FROM certificate_requests
 WHERE id = ?;
@@ -239,11 +217,6 @@ WHERE id = ?;
 -- name: UpdateCertificateRequestStatus :exec
 UPDATE certificate_requests
 set status = ?, status_message = ?
-WHERE id = ?;
-
--- name: UpdateCertificateRequestContentId :exec
-UPDATE certificate_requests
-set certificate_contents_id = ?
 WHERE id = ?;
 
 --------------------------------------------
@@ -494,7 +467,7 @@ SELECT id,
   enqueued_at,
   processor,
   arguments
-FROM scheduler_queue
+FROM scheduler_failed
 WHERE id = ? LIMIT 1;
 
 -- name: CreateFailedJob :one
@@ -583,20 +556,80 @@ SELECT COUNT(*) as count FROM scheduler_completed;
 --------------------------------------------
 
 -- name: GetCertificateContent :one
-SELECT id, csr, private_key, public_key
+SELECT id, name, encoding, content, updated_at, created_at, certificate_request_id
 FROM certificate_contents
 WHERE id = ? LIMIT 1;
 
--- name: CreateCertificateContentCsr :one
+-- name: GetCertificateContentByNameEncodingRequestID :one
+SELECT id, name, encoding, content, updated_at, created_at, certificate_request_id
+FROM certificate_contents
+WHERE certificate_request_id = ? AND name = ? AND encoding = ? LIMIT 1;
+
+-- name: ListCertificateContent :many
+SELECT id, name, encoding, content, updated_at, created_at, certificate_request_id
+FROM certificate_contents
+WHERE certificate_request_id = ?;
+
+-- name: CreateCertificateContent :one
 INSERT INTO certificate_contents (
-  csr,
-  private_key
+  name,
+  encoding,
+  content,
+  certificate_request_id,
+  updated_at,
+  created_at
 ) VALUES (
-  ?, ?
+  ?, ?, ?, ?, ?, ?
 )
 RETURNING id;
 
--- name: UpdateCertificateContentPublicKey :exec
-UPDATE certificate_contents
-set public_key = ?
+--------------------------------------------
+-- certificate_requests_timeline
+--------------------------------------------
+
+-- name: GetCertificateRequestTimeline :one
+SELECT id, certificate_request_id, status, event, created_at, updated_at
+FROM certificate_requests_timeline
+WHERE id = ? LIMIT 1;
+
+-- name: ListCertificateRequestTimeline :many
+SELECT id, certificate_request_id, status, event, created_at, updated_at
+FROM certificate_requests_timeline
+WHERE certificate_request_id = ?
+ORDER BY id;
+
+-- name: CreateCertificateRequestTimeline :one
+INSERT INTO certificate_requests_timeline (
+  certificate_request_id,
+  status,
+  event,
+  created_at,
+  updated_at
+) VALUES (
+  ?, ?, ?, ?, ?
+)
+RETURNING id;
+
+-- name: GetCertificateRequestTimelineByRequest :one
+SELECT id, certificate_request_id, status, event, created_at, updated_at
+FROM certificate_requests_timeline
+WHERE certificate_request_id = ? AND event = ? LIMIT 1;
+
+-- name: UpdateCertificateRequestTimeline :exec
+UPDATE certificate_requests_timeline
+SET status = ?, event = ?, updated_at = ?
 WHERE id = ?;
+
+-- name: UpdateCertificateRequestTimelineByRequest :exec
+UPDATE certificate_requests_timeline
+SET status = ?, updated_at = ?
+WHERE certificate_request_id = ? AND event = ?;
+
+-- name: DeleteCertificateRequestTimeline :exec
+DELETE FROM certificate_requests_timeline
+WHERE id = ?;
+
+-- name: DeleteCertificateRequestTimelines :exec
+DELETE FROM certificate_requests_timeline
+WHERE certificate_request_id = ?;
+

@@ -2,6 +2,7 @@ package views
 
 import (
 	"embed"
+	"fmt"
 	"io"
 	"strings"
 	"text/template"
@@ -100,7 +101,7 @@ func (t *TemplateRegistry) RenderErr(w io.Writer, name string, err error, c echo
 	return tmpl.ExecuteTemplate(w, "error", err)
 }
 
-func (t *TemplateRegistry) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+func (t *TemplateRegistry) Render(w io.Writer, name string, data interface{}, c echo.Context) (err error) {
 	// return html.Dashboard(w, html.DashboardParams{}, "layout.html")
 	if name == "error" {
 		tmpl, renderError := template.New("error").ParseFS(views, "error.html")
@@ -117,7 +118,11 @@ func (t *TemplateRegistry) Render(w io.Writer, name string, data interface{}, c 
 		return t.templates[name].ExecuteTemplate(w, name, data)
 	}
 
-	return t.templates[name].ExecuteTemplate(w, "layout.html", data)
+	if err := t.templates[name].ExecuteTemplate(w, "layout.html", data); err != nil {
+		fmt.Printf("Error rendering template: %v\n", err)
+	}
+
+	return err
 }
 
 func (t *TemplateRegistry) Register(name string, functions template.FuncMap) {

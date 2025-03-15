@@ -62,29 +62,41 @@ func (i *CreateRsaCsrJob) Run(log *log.Logger, args CreateRsaCsrArguments) (next
 		return nil, err
 	}
 
-	// csrBlock := &pem.Block{
-	// 	Type:  "CERTIFICATE REQUEST",
-	// 	Bytes: csr,
-	// }
-	// csrPem := pem.EncodeToMemory(csrBlock)
+	now := time.Now()
 
-	id, err := queries.CreateCertificateContentCsr(ctx, repo.CreateCertificateContentCsrParams{
-		Csr:        csr,
-		PrivateKey: privateKeyPem,
-	})
-
-	if err != nil {
+	if _, err = queries.CreateCertificateContent(ctx, repo.CreateCertificateContentParams{
+		CertificateRequestID: args.ID,
+		Content:              csr,
+		UpdatedAt:            now,
+		CreatedAt:            now,
+		Name:                 "csr",
+		Encoding:             "der",
+	}); err != nil {
 		return nil, fmt.Errorf("failed to create certificate content csr: %w", err)
 	}
 
-	err = queries.UpdateCertificateRequestContentId(ctx, repo.UpdateCertificateRequestContentIdParams{
-		ID:                    args.ID,
-		CertificateContentsID: sql.NullInt64{Int64: id, Valid: true},
-	})
+	if _, err = queries.CreateCertificateContent(ctx, repo.CreateCertificateContentParams{
+		CertificateRequestID: args.ID,
+		Content:              privateKeyPem,
+		UpdatedAt:            now,
+		CreatedAt:            now,
+		Name:                 "privatekey",
+		Encoding:             "pem",
+	}); err != nil {
+		return nil, fmt.Errorf("failed to create certificate content csr: %w", err)
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to update certificate request content id: %w", err)
 	}
+
+	queries.UpdateCertificateRequestTimelineByRequest(ctx,
+		repo.UpdateCertificateRequestTimelineByRequestParams{
+			CertificateRequestID: args.ID,
+			Event:                int64(Generated),
+			Status:               int64(Completed),
+			UpdatedAt:            time.Now(),
+		})
 
 	return &scheduling.Job{
 		Id:         uuid.New(),

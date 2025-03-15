@@ -22,9 +22,14 @@ CREATE TABLE hash_algorithm (
 
 CREATE TABLE certificate_contents (
   id integer PRIMARY KEY,
-  csr BLOB,
-  private_key BLOB,
-  public_key BLOB
+  name varchar NOT NULL,
+  encoding varchar NOT NULL,
+  content BLOB NOT NULL,
+  updated_at timestamp NOT NULL,
+  created_at timestamp NOT NULL,
+  certificate_request_id integer NOT NULL,
+
+  FOREIGN KEY(certificate_request_id) REFERENCES certificate_requests(id)
 );
 
 CREATE TABLE certificate_requests (
@@ -39,13 +44,11 @@ CREATE TABLE certificate_requests (
   signing_request_api_id integer,
   cipher_algorithm_id integer,
   hash_algorithm_id integer,
-  certificate_contents_id integer,
 
   FOREIGN KEY(certificate_cryptographic_api_id) REFERENCES certificate_cryptographic_api(id),
   FOREIGN KEY(signing_request_api_id) REFERENCES signing_request_api(id),
   FOREIGN KEY(hash_algorithm_id) REFERENCES hash_algorithm(id),
-  FOREIGN KEY(cipher_algorithm_id) REFERENCES cipher_algorithm(id),
-  FOREIGN KEY(certificate_contents_id) REFERENCES certificate_contents(id)
+  FOREIGN KEY(cipher_algorithm_id) REFERENCES cipher_algorithm(id)
 );
 
 CREATE TABLE certificate_authorities (
@@ -114,4 +117,15 @@ CREATE TABLE scheduler_completed (
   processor varchar NOT NULL,
   arguments BLOB NOT NULL,
   log varchar NOT NULL
+);
+
+CREATE TABLE certificate_requests_timeline (
+  id integer PRIMARY KEY NOT NULL,
+  certificate_request_id integer NOT NULL,
+  event integer NOT NULL,
+  status integer NOT NULL,
+  updated_at timestamp NOT NULL,
+  created_at timestamp NOT NULL,
+
+  FOREIGN KEY(certificate_request_id) REFERENCES certificate_requests(id)
 );

@@ -5,57 +5,136 @@
 
     <div class="row">
       <div class="col-md-2">
-        <img src="/images/certification-128.png" width="70px" height="70px">
-        <button type="button" id="showCertificateDownloadOptionsButton" class="btn btn-primary btn-sm"
-          style="margin-top:20px; display:block;"><i class="fa fa-download"></i> Download</button>
+        <img src="/images/certification-128.png" style="display: block; margin: auto; width: 75%; height: auto;"
+          width="100px" height="100px">
+        <section class="w-100 p-1 pt-4">
+          <ul class="timeline">
+            {{ range $item := .Timeline }}
+            <li class="{{ $item.Status | RequestTimelineStatusString | toLower }}">
+              <h5 style="font-size: .936rem;" class="mt-0 mb-1">{{ $item.Event | RequestTimelineEventString}}</h5>
+              {{ if ne ($item.Status | RequestTimelineStatusString | toLower) "pending" }}
+              <p class="font-14 text-muted {{ $item.Status | RequestTimelineStatusString | toLower }}">{{ $item.UpdatedAt.Format "Jan 02, 2006" }}</p>
+              {{ end }}
+            </li>
+            {{ end }}
+          </ul>
+        </section>
       </div>
 
-      <div class="col-md-10">
+      <div class="col-md-10 ">
 
-        <h5 class="mb-2" id="displayName">{{ .DisplayName.String }}</h5>
+        <section>
 
-        <table class="table table-borderless table-sm table-striped">
-          <tr>
-            <th style="text-align: right; width: 160px" scope="row" >Id</th>
-            <td id="certificate-id">{{ .ID }}</td>
+          <div class="col">
+            <h2 class="fs-5 mb-2" id="displayName">{{ .DisplayName }}</h2>
+          </div>
 
-          </tr>
-          <tr>
-            <th style="text-align: right;">Thumbprint</th>
-            <td id="thumbprint"></td>
-          </tr>
+          <table class="table">
 
+            <tr>
+              <td style="width: 10px !important;"></td>
+              <td class="text-body-secondary" style="width:200px">ID</td>
+              <td id="certificate-id">{{ .ID }}</td>
+            </tr>
 
-          <tr>
-            <th style="text-align: right;">Hash Algorithm</th>
-            <td id="hashAlgorithm">{{ .HashAlgorithm.String }}</td>
-          </tr>
-          <tr>
-            <th style="text-align: right;">Cipher Algorithm</th>
-            <td id="cipherAlgorithm">{{ .CipherAlgorithm.String }}</td>
-          </tr>
-          <tr>
-            <th style="text-align: right;">Has PrivateKey</th>
-            <td id="hasPrivateKey">false</td>
-          </tr>
-          <tr>
-            <th style="text-align: right;">Expires</th>
-            <td id="expires"></td>
-          </tr>
-          <tr>
-            <th style="text-align: right;">Windows Api</th>
-            <td id="windowsApi">{{ .CertificateCryptographicApi.String }}</td>
-          </tr>
-          <tr>
-            <th style="text-align: right;">Key Length</th>
-            <td id="keySize">{{ .KeyLength.Int64 }}</td>
-          </tr>
-          <tr>
-            <th style="text-align: right;">Signing Request API</th>
-            <td id="storageFormat">{{ .SigningRequestApi.String }}</td>
-          </tr>
+            <tr>
+              <td></td>
+              <td class="text-body-secondary">Key Length</td>
+              <td>{{ .KeyLength }}</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td class="text-body-secondary">Hash Algorithm</td>
+              <td>{{ .HashAlgorithm }}</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td class="text-body-secondary">Cipher Algorithm</td>
+              <td>{{ .CipherAlgorithm }}</td>
+            </tr>
+            <tr>
+              <td></td>
+              <td class="text-body-secondary">HasPrivateKey</td>
+              <td>false</td>
+            </tr>
+            <!-- <tr>
+              <td></td>
+              <td class="text-body-secondary">Expires</td>
+              <td></td>
+            </tr> -->
+            <tr>
+              <td></td>
+              <td class="text-body-secondary">Thumbprint</td>
+              <td id="thumbprint">{{ .Thumbprint }}</td>
+            </tr>
+          </table>
+        </section>
 
-        </table>
+        <section>
+          <div class="row align-items-center justify-content-between mb-5">
+            <div class="col">
+              <h2 class="fs-5 mb-0">Files</h2>
+            </div>
+            <div class="col-auto">
+              <!-- <a class="btn btn-primary" href="#">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                  class="bi bi-file-earmark-arrow-up me-2" viewBox="0 0 16 16">
+                  <path
+                    d="M8.5 11.5a.5.5 0 0 1-1 0V7.707L6.354 8.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 7.707z" />
+                  <path
+                    d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z" />
+                </svg>
+
+                Upload </a> -->
+              <!-- <a class="btn btn-light" href="#"> <span
+                  class="material-symbols-outlined text-body-secondary me-1">upload</span> Upload </a> -->
+            </div>
+          </div>
+          {{ if .Contents }}
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <tbody>
+                {{ range $item := .Contents }}
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar rounded text-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                          class="fs-4 duo-icon duo-icon-id-card" data-duoicon="id-card">
+                          <path fill="currentColor"
+                            d="M20 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16Z"
+                            class="duoicon-secondary-layer" opacity=".3"></path>
+                          <path fill="currentColor"
+                            d="M10 9v2H8V9h2Zm7 2h-3a1 1 0 0 0-.117 1.993L14 13h3a1 1 0 0 0 .117-1.993L17 11Z"
+                            class="duoicon-primary-layer"></path>
+                          <path fill="currentColor"
+                            d="M10 7H8a2 2 0 0 0-1.995 1.85L6 9v2a2 2 0 0 0 1.85 1.995L8 13h2a2 2 0 0 0 1.995-1.85L12 11V9a2 2 0 0 0-1.85-1.995L10 7Zm7 8H7a1 1 0 1 0 0 2h10a1 1 0 1 0 0-2Z"
+                            class="duoicon-primary-layer"></path>
+                        </svg>
+                      </div>
+                      <div class="ms-4">
+                        <div class="fw-normal">{{ .Name }}.{{ .Encoding }}</div>
+                        <div class="fs-sm text-body-secondary">{{ .Content | ByteLength }} bytes · {{ .Encoding }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="text-body-secondary">Updated on {{ .UpdatedAt.Format "Jan 02, 2006" }}</td>
+                  <td style="width: 0">
+                    <a href="/requests/{{ .ID }}/download/privatekey.pem" class="btn btn-sm btn-primary"
+                      download>Download</a>
+                  </td>
+                </tr>
+                {{ end }}
+              </tbody>
+            </table>
+          </div>
+          {{ else }}
+          <div class="alert alert-info" role="alert">
+            Certificate request does not have any files yet, check back later.
+          </div>
+          {{ end }}
+        </section>
+
       </div>
 
     </div>

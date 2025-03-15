@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha1"
+	"crypto/x509"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -95,7 +98,7 @@ func main() {
 
 	// TODO figure out a better way to do this
 	e.Renderer = views.NewTemplates([]string{
-		"issued.html",
+		"home.html",
 		"certificates/new.html",
 		"requests/list.html",
 		"requests/view.html",
@@ -123,6 +126,19 @@ func main() {
 				result, _ := json.MarshalIndent(data, "", "    ")
 				return string(result)
 			},
+			"toLower": func(s string) string {
+				return strings.ToLower(s)
+			},
+			"RequestTimelineStatusString": func(status int64) string {
+				return certificates.RequestTimelineStatus(status).String()
+			},
+			"RequestTimelineEventString": func(event int64) string {
+				return certificates.RequestTimelineEvent(event).String()
+			},
+			// TODO use generics
+			"ByteLength": func(data []byte) int {
+				return len(data)
+			},
 		})
 
 	e.Static("/css", "css")
@@ -144,7 +160,7 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
 	e.GET("/", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "issued.html", nil)
+		return c.Render(http.StatusOK, "home.html", nil)
 	})
 
 	e.POST("/certificates/request", func(c echo.Context) error {
@@ -178,17 +194,40 @@ func main() {
 			return c.String(400, "invalid keylength")
 		}
 
-		_, err = queries.CreateCertificateRequest(ctx, repo.CreateCertificateRequestParams{
+		now := time.Now()
+		request, err := queries.CreateCertificateRequest(ctx, repo.CreateCertificateRequestParams{
 			DisplayName:                   sql.NullString{String: displayName, Valid: true},
 			KeyLength:                     sql.NullInt64{Int64: keyLength, Valid: true},
 			HashAlgorithmID:               sql.NullInt64{Int64: hashAlgorithmId, Valid: true},
 			CipherAlgorithmID:             sql.NullInt64{Int64: cipherAlgorithmId, Valid: true},
 			CertificateCryptographicApiID: sql.NullInt64{Int64: cryptoApiId, Valid: true},
 			SigningRequestApiID:           sql.NullInt64{Int64: signingRequestApiId, Valid: true},
+			RequestedOn:                   sql.NullTime{Time: now, Valid: true},
 		})
 
 		if err != nil {
 			return c.String(500, "something happened")
+		}
+
+		timeline := []struct{ Status, Event int64 }{
+			{int64(certificates.Completed), int64(certificates.Requested)},
+			{int64(certificates.Pending), int64(certificates.Approved)},
+			{int64(certificates.Pending), int64(certificates.Generated)},
+			{int64(certificates.Pending), int64(certificates.Submitted)},
+			{int64(certificates.Pending), int64(certificates.Issued)},
+		}
+
+		for _, t := range timeline {
+			_, err = queries.CreateCertificateRequestTimeline(ctx, repo.CreateCertificateRequestTimelineParams{
+				CertificateRequestID: request,
+				Event:                t.Event,
+				Status:               t.Status,
+				CreatedAt:            now,
+				UpdatedAt:            now,
+			})
+			if err != nil {
+				return c.String(500, "something happened")
+			}
 		}
 
 		return c.Redirect(302, "/requests/list.html")
@@ -265,17 +304,20 @@ func main() {
 		if err != nil {
 			return c.String(500, "something happened")
 		}
+
+		queries.DeleteCertificateRequestTimelines(ctx, id)
 		return c.NoContent(200)
 	})
 
 	e.POST("requests/approve/:id", func(c echo.Context) error {
+		ctx := c.Request().Context()
 		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 
 		if err != nil {
 			return c.String(400, "invalid id")
 		}
 
-		req, err := queries.GetCertificateRequest(c.Request().Context(), id)
+		req, err := queries.GetCertificateRequest(ctx, id)
 		if err != nil {
 			return c.String(500, "Unable to approve request")
 		}
@@ -283,7 +325,7 @@ func main() {
 			return c.String(400, "request already approved")
 		}
 
-		err = queries.UpdateCertificateRequestStatus(c.Request().Context(),
+		err = queries.UpdateCertificateRequestStatus(ctx,
 			repo.UpdateCertificateRequestStatusParams{
 				Status: sql.NullInt64{Int64: repo.Approved, Valid: true},
 				ID:     id,
@@ -293,8 +335,16 @@ func main() {
 			return c.String(500, "Unable to approve request")
 		}
 
+		queries.UpdateCertificateRequestTimelineByRequest(ctx,
+			repo.UpdateCertificateRequestTimelineByRequestParams{
+				CertificateRequestID: id,
+				Event:                int64(certificates.Approved),
+				Status:               int64(certificates.Completed),
+				UpdatedAt:            time.Now(),
+			})
+
 		performAt := time.Now().Add((5 * time.Second))
-		queue.EnqueueJob(c.Request().Context(), performAt, &scheduling.Job{
+		queue.EnqueueJob(ctx, performAt, &scheduling.Job{
 			Id:         uuid.New(),
 			Retry:      false,
 			RetryCount: 0,
@@ -325,14 +375,101 @@ func main() {
 			return c.String(400, "invalid id")
 		}
 
-		csr, err := queries.GetCertificateRequestWithContent(ctx, id)
+		request, err := queries.GetCertificateRequestDetailed(ctx, id)
 
 		if err != nil {
+			fmt.Println("error getting request", err)
 			return c.Render(500, "error", err)
 		}
 
-		return c.Render(http.StatusOK, "requests/view.html", csr)
+		timeline, _ := queries.ListCertificateRequestTimeline(ctx, request.ID)
+		contents, err := queries.ListCertificateContent(ctx, id)
+		if err != nil {
+			fmt.Println("error getting contents", err)
+		}
+
+		data := make(map[string]interface{})
+		data["ID"] = request.ID
+		data["DisplayName"] = request.DisplayName.String
+		data["KeyLength"] = request.KeyLength.Int64
+		data["HashAlgorithm"] = request.HashAlgorithm.String
+		data["CipherAlgorithm"] = request.CipherAlgorithm.String
+
+		data["Contents"] = contents
+		data["Timeline"] = timeline
+
+		csrContent, err := queries.GetCertificateContentByNameEncodingRequestID(ctx,
+			repo.GetCertificateContentByNameEncodingRequestIDParams{
+				Name:                 "csr",
+				Encoding:             "der",
+				CertificateRequestID: id,
+			})
+		if err != nil {
+			return c.Render(http.StatusOK, "requests/view.html", data)
+		}
+
+		csr, err := x509.ParseCertificateRequest(csrContent.Content)
+		sigHash := sha1.Sum(csr.Signature)
+		if err != nil {
+			return c.Render(http.StatusOK, "requests/view.html", data)
+		}
+
+		data["Thumbprint"] = hex.EncodeToString(sigHash[:])
+
+		return c.Render(http.StatusOK, "requests/view.html", data)
 	})
+
+	// e.GET("requests/:id/download/csr.pem", func(c echo.Context) error {
+	// 	ctx := context.Background()
+
+	// 	idStr := c.Param("id")
+
+	// 	if err != nil {
+	// 		return c.String(400, "invalid id")
+	// 	}
+
+	// 	id, err := strconv.ParseInt(idStr, 10, 64)
+	// 	if err != nil {
+	// 		return c.String(400, "invalid id")
+	// 	}
+
+	// 	request, err := queries.GetCertificateRequestWithContent(ctx, id)
+
+	// 	if err != nil {
+	// 		return c.Render(500, "error", err)
+	// 	}
+
+	// 	csrBlock := &pem.Block{
+	// 		Type:  "CERTIFICATE REQUEST",
+	// 		Bytes: request.Csr,
+	// 	}
+	// 	csrPem := pem.EncodeToMemory(csrBlock)
+
+	// 	return c.String(200, string(csrPem))
+	// })
+
+	// e.GET("requests/:id/download/privatekey.pem", func(c echo.Context) error {
+	// 	ctx := context.Background()
+
+	// 	idStr := c.Param("id")
+
+	// 	if err != nil {
+	// 		return c.String(400, "invalid id")
+	// 	}
+
+	// 	id, err := strconv.ParseInt(idStr, 10, 64)
+	// 	if err != nil {
+	// 		return c.String(400, "invalid id")
+	// 	}
+
+	// 	request, err := queries.GetCertificateRequestWithContent(ctx, id)
+
+	// 	if err != nil {
+	// 		return c.Render(500, "error", err)
+	// 	}
+
+	// 	return c.String(200, string(request.PrivateKey))
+	// })
 
 	e.GET("settings/api.html", func(c echo.Context) error {
 		ctx := context.Background()
@@ -466,7 +603,7 @@ func main() {
 		data["Name"] = ca.Name
 		data["Server"] = ca.Server
 		data["Username"] = ca.Username
-		data["Password"] = ca.Password
+		data["Password"] = "********"
 
 		return c.Render(200, "ca-add", data)
 	})
@@ -657,6 +794,11 @@ func main() {
 		if err != nil {
 			fmt.Printf("error retrying job: %v", err)
 			return c.String(500, "something happened")
+		}
+
+		err = queries.DeleteFailedJob(ctx, id)
+		if err != nil {
+			fmt.Printf("error deleting failed job: %v", err)
 		}
 
 		return c.NoContent(200)

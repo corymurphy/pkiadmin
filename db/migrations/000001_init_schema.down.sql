@@ -8,3 +8,4 @@ DROP TABLE IF EXISTS credentials;
 DROP TABLE IF EXISTS scheduler_scheduledset;
 DROP TABLE IF EXISTS scheduler_inprogressset;
 DROP TABLE IF EXISTS scheduler_queue;
+DROP TABLE IF EXISTS certificate_requests_timeline;

@@ -22,9 +22,14 @@ CREATE TABLE "certificate_cryptographic_api" (
 
 CREATE TABLE "certificate_contents" (
   "id" integer PRIMARY KEY,
-  "csr" BLOB,
-  "private_key" BLOB,
-  "public_key" BLOB
+  "name" varchar NOT NULL,
+  "encoding" varchar NOT NULL,
+  "content" BLOB NOT NULL,
+  "updated_at" timestamp NOT NULL,
+  "created_at" timestamp NOT NULL,
+  "certificate_request_id" integer NOT NULL,
+
+  FOREIGN KEY(certificate_request_id) REFERENCES certificate_requests(id)
 );
 
 CREATE TABLE "certificate_requests" (
@@ -144,3 +149,13 @@ INSERT INTO "cipher_algorithm" (name, keysize) VALUES
 INSERT INTO "certificate_requests" (display_name, key_length, status, hash_algorithm_id, cipher_algorithm_id, certificate_cryptographic_api_id, signing_request_api_id) VALUES
 ('example.com', 2048, 1, 2, 1, 2, 2);
 
+CREATE TABLE "certificate_requests_timeline" (
+  "id" integer PRIMARY KEY NOT NULL,
+  "certificate_request_id" integer NOT NULL,
+  "event" integer NOT NULL,
+  "status" integer NOT NULL,
+  "updated_at" timestamp NOT NULL,
+  "created_at" timestamp NOT NULL,
+
+  FOREIGN KEY(certificate_request_id) REFERENCES certificate_requests(id)
+);
