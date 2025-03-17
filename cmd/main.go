@@ -551,7 +551,8 @@ func main() {
 	})
 
 	e.GET("settings/ca.html", func(c echo.Context) error {
-		cas, err := queries.ListCertificateAuthorities(c.Request().Context())
+		ctx := c.Request().Context()
+		cas, err := queries.ListCertificateAuthorities(ctx)
 
 		if err != nil {
 			return c.Render(500, "error", err)
@@ -559,7 +560,38 @@ func main() {
 
 		data := make(map[string]interface{})
 
-		data["CertificateAuthorities"] = cas
+		var caList []interface{}
+
+		for _, caData := range cas {
+			ca := adcs.NewCA(
+				adcs.WithName(caData.Name),
+				adcs.WithServer(caData.Server),
+				adcs.WithUsername(caData.Username),
+				adcs.WithPassword(caData.Password),
+				adcs.WithPort("135"), // TODO: get from repo
+			)
+
+			templates, err := ca.Templates(ctx)
+			if err != nil {
+				return c.Render(500, "error", err)
+			}
+
+			caList = append(caList, struct {
+				ID        int64
+				Name      string
+				Server    string
+				Username  string
+				Templates []adcs.CertificateAuthorityTemplate
+			}{
+				ID:        caData.ID,
+				Name:      caData.Name,
+				Server:    caData.Server,
+				Username:  caData.Username,
+				Templates: templates,
+			})
+		}
+
+		data["CertificateAuthorities"] = caList
 
 		return c.Render(http.StatusOK, "settings/ca.html", data)
 	})
@@ -630,8 +662,34 @@ func main() {
 	})
 
 	e.GET("sandbox", func(c echo.Context) error {
-		data := certificates.Sandbox()
-		// data := certificates.WmiDemo2()
+		ctx := c.Request().Context()
+
+		data := struct {
+			err  error
+			data string
+		}{}
+		cas, _ := queries.ListCertificateAuthorities(ctx)
+		caData := cas[0]
+		ca := adcs.NewCA(
+			adcs.WithName(caData.Name),
+			adcs.WithServer(caData.Server),
+			adcs.WithUsername(caData.Username),
+			adcs.WithPassword(caData.Password),
+			adcs.WithPort("135"), // TODO: get from repo
+		)
+
+		// err := ca.Ping()
+
+		// if err != nil {
+		// 	data.data = "error pinging ca"
+		// 	data.err = err
+		// 	return c.Render(http.StatusOK, "error", data)
+		// }
+
+		_, err := ca.Templates(ctx)
+		// data.data = response
+		data.err = err
+
 		return c.Render(http.StatusOK, "error", data)
 	})
 

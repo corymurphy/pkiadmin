@@ -1,20 +1,69 @@
 {{ block "ca-add" . }}
 <tbody hx-swap-oob="beforeend:#ca-table">
+
   <tr id="ca-{{ .ID }}">
-    <th scope="row">{{ .ID }}</th>
+    <td>
+      <div class="action toggle">
+        <button class="collapsible" onclick='toggleFold(this, "ca-{{ .ID }}")'>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus"
+            viewBox="0 0 16 16">
+            <path
+              d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-dash"
+            viewBox="0 0 16 16">
+            <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8" />
+          </svg>
+        </button>
+      </div>
+    </td>
+    <td scope="row">{{ .ID }}</td>
     <td>{{ .Name }}</td>
     <td>{{ .Server }}</td>
     <td>{{ .Username }}</td>
     <td>{{ .Password }}</td>
     <td>
-      <div class="action">
-        <button class="text-danger" hx-target="#ca-{{ .ID }}" hx-delete="/settings/ca/{{ .ID }}">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-            class="bi bi-trash-fill" viewBox="0 0 16 16">
+      <div hx-get="/ca/status/{{ .ID }}" hx-trigger="load delay:1s">
+        <div class="chakra-stack css-16vr4dd">
+          <span class="chakra-badge css-oqjyxw">
+            <div class="chakra-stack css-18e1wj0">
+              <div class="css-6jcppe">
+                <div class="css-0">
+                  <div class="css-jyhuqh"></div>
+                </div>
+                <div class="css-xi606m">
+                  <div class="chakra-stack css-1hohgv6">
+                    <p style="margin:0;" class="chakra-text css-zylzbl">Pending</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </span>
+        </div>
+      </div>
+    </td>
+    <td>
+      <div class="d-flex gap-1 action">
+        <button hx-indicator="#cai-{{ .ID }}" class="text-danger" hx-target="#ca-{{ .ID }}" hx-delete="/ca/{{ .ID }}">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash-fill"
+            viewBox="0 0 16 16">
             <path
               d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
           </svg>
         </button>
+        <div id="cai-{{ .ID }}" class="htmx-indicator spinner-border text-light d-flex align-items-center"
+          style="width: 1.35rem; height: 1.35rem; margin: auto 0;" role="status">
+          <span class="visually-hidden">loading</span>
+        </div>
+      </div>
+    </td>
+  </tr>
+  <tr class="fold">
+    <td colspan="8">
+      <div class="fold-content">
+        <code>
+          info
+        </code>
       </div>
     </td>
   </tr>
