@@ -29,7 +29,7 @@ docker run --rm -v $(pwd):/src -w /src sqlc/sqlc generate
     - [] local
 * [] install certificates on iis
     - [] build powershell remote execution system
-* [] show templates under certificate authorities
+* [x] show templates under certificate authorities
 * [] separate certs/requests?
 * [] fix the status badge to be less of a mess of css
 * [] support group managed service accounts

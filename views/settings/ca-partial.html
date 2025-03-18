@@ -69,3 +69,10 @@
   </tr>
 </tbody>
 {{ end }}
+
+
+{{ block "ca-templates" . }}
+{{ range $item := .Templates }}
+<option value="{{ $item.ID }}">{{ $item.Name }}</option>
+{{ end }}
+{{ end }}

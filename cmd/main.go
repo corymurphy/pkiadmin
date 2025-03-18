@@ -237,18 +237,6 @@ func main() {
 		ctx := context.Background()
 		data := make(map[string]interface{})
 
-		cryptoApis, err := queries.ListCertCryptoApi(ctx)
-
-		if err != nil {
-			return c.Render(500, "error", err)
-		}
-
-		signingApis, err := queries.ListSigningRequestApi(ctx)
-
-		if err != nil {
-			return c.Render(500, "error", err)
-		}
-
 		cipherAlgorithms, err := queries.ListCipherAlgorithm(ctx)
 
 		if err != nil {
@@ -267,8 +255,12 @@ func main() {
 			keyLengths = append(keyLengths, strconv.FormatInt(alg.Keysize.Int64, 10))
 		}
 
-		data["CryptoApis"] = cryptoApis
-		data["SigningApis"] = signingApis
+		cas, err := queries.ListCertificateAuthorities(ctx)
+		if err != nil {
+			return c.Render(500, "error", err)
+		}
+
+		data["CertificateAuthorities"] = cas
 		data["CipherAlgorithms"] = cipherAlgorithms
 		data["HashAlgorithms"] = hasAlgorithms
 		data["KeyLengths"] = keyLengths
@@ -548,6 +540,40 @@ func main() {
 			return c.String(500, "something happened")
 		}
 		return c.NoContent(200)
+	})
+
+	e.GET("ca/templates.html", func(c echo.Context) (err error) {
+		ctx := c.Request().Context()
+
+		id, err := strconv.ParseInt(c.FormValue("ca"), 10, 64)
+		if err != nil {
+			return c.String(400, "invalid id")
+		}
+
+		caData, err := queries.GetCertificateAuthority(ctx, id)
+
+		if err != nil {
+			return c.Render(500, "error", err)
+		}
+
+		data := make(map[string]interface{})
+
+		ca := adcs.NewCA(
+			adcs.WithName(caData.Name),
+			adcs.WithServer(caData.Server),
+			adcs.WithUsername(caData.Username),
+			adcs.WithPassword(caData.Password),
+			adcs.WithPort("135"), // TODO: get from repo
+		)
+
+		templates, err := ca.Templates(ctx)
+		if err != nil {
+			return c.Render(500, "error", err)
+		}
+
+		data["Templates"] = templates
+
+		return c.Render(200, "ca-templates", data)
 	})
 
 	e.GET("settings/ca.html", func(c echo.Context) error {

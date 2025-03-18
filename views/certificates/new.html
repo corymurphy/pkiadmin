@@ -1,60 +1,29 @@
 {{ define "content" }}
 <section class="table-components" style="padding-top: 15px; padding-left: 30px; padding-right: 30px;">
-  <div class="my-3 p-3 bg-body rounded shadow-sm">
-    <h6 class="border-bottom pb-2 mb-2">Issue New Certificate</h6>
-    <form method="post" action="/certificates/request" class="needs-validation">
+  <h6 class="border-bottom pb-2 mb-2">Issue New Certificate</h6>
+
+  <form method="post" action="/certificates/request" class="needs-validation">
+
+    <div class="my-3 p-3 bg-body rounded shadow-sm">
       <div class="row gy-3">
-        <div class="col-sm-12">
-          <label for="displayName" class="form-label">Display name</label>
-          <input type="text" class="form-control" name="displayName" id="displayName" placeholder="example.com" value=""
+        <div class="col-md-4">
+          <label for="commonname" class="form-label">Common Name</label>
+          <input type="text" class="form-control" name="commonname" id="commonname" placeholder="example.com" value=""
             required>
-          <!-- <div class="invalid-feedback">
-                Valid display name is required.
-              </div> -->
         </div>
-        <!-- </div> -->
+        <div class="col-md-4">
+          <label for="san" class="form-label">Subject Alternative Names (comma separated)</label>
+          <input type="text" class="form-control" name="san" id="san" placeholder="web1.example.com,*.example.com">
+        </div>
+        <div class="col-md-4">
+          <label for="orgname" class="form-label">Organization Name</label>
+          <input type="text" class="form-control" name="orgname" id="orgname" placeholder="example.com" value="">
+        </div>
+      </div>
+    </div>
 
-        <!-- <div class="col-sm-6">
-              <label for="lastName" class="form-label">Last name</label>
-              <input type="text" class="form-control" id="lastName" placeholder="" value="" required="">
-              <div class="invalid-feedback">
-                Valid last name is required.
-              </div>
-            </div> -->
-
-        <!-- <div class="col-12">
-              <label for="username" class="form-label">Username</label>
-              <div class="input-group has-validation">
-                <span class="input-group-text">@</span>
-                <input type="text" class="form-control" id="username" placeholder="Username" required="">
-              <div class="invalid-feedback">
-                  Your username is required.
-                </div>
-              </div>
-            </div> -->
-
-        <!-- <div class="col-12">
-              <label for="email" class="form-label">Email <span class="text-body-secondary">(Optional)</span></label>
-              <input type="email" class="form-control" id="email" placeholder="you@example.com">
-              <div class="invalid-feedback">
-                Please enter a valid email address for shipping updates.
-              </div>
-            </div> -->
-
-        <!-- <div class="col-12">
-              <label for="address" class="form-label">Address</label>
-              <input type="text" class="form-control" id="address" placeholder="1234 Main St" required="">
-              <div class="invalid-feedback">
-                Please enter your shipping address.
-              </div>
-            </div>
-
-            <div class="col-12">
-              <label for="address2" class="form-label">Address 2 <span class="text-body-secondary">(Optional)</span></label>
-              <input type="text" class="form-control" id="address2" placeholder="Apartment or suite">
-            </div> -->
-
-
+    <div class="my-3 p-3 bg-body rounded shadow-sm">
+      <div class="row gy-3">
         <div class="col-md-4">
           <label for="keyLength" class="form-label">Key Length</label>
           <select class="form-select" id="keyLength" name="keyLength" required="">
@@ -80,18 +49,6 @@
         </div>
 
         <div class="col-md-4">
-          <label for="signingRequestApiId" class="form-label">Signing Request Api</label>
-          <select class="form-select" id="signingRequestApiId" name="signingRequestApiId" required="">
-            {{ range $item := .SigningApis }}
-            <option value="{{ $item.ID }}">{{ $item.Name.String }}</option>
-            {{ end }}
-          </select>
-          <div class="invalid-feedback">
-            please provide a valid signing request api
-          </div>
-        </div>
-
-        <div class="col-md-4">
           <label for="cipherAlgorithmId" class="form-label">Cipher</label>
           <select class="form-select" name="cipherAlgorithmId" id="cipherAlgorithmId" required="">
             {{ range $item := .CipherAlgorithms }}
@@ -102,37 +59,39 @@
             please provide a valid cipher algorithm
           </div>
         </div>
+      </div>
+    </div>
 
-        <div class="col-md-8">
-          <label for="cryptoApiId" class="form-label">Cryptographic API</label>
-          <select class="form-select" name="cryptoApiId" id="cryptoApiId" required="">
-            {{ range $item := .CryptoApis }}
-            <option value="{{ $item.ID }}">{{ $item.Name.String }}</option>
+    <div class="my-3 p-3 bg-body rounded shadow-sm">
+      <div class="row gy-3">
+        <div class="col-md-4">
+          <label for="ca" class="form-label">Certificate Authority</label>
+          <select class="form-select" name="ca" hx-get="/ca/templates.html" hx-target="#templates" hx-trigger="load"
+            hx-indicator="#ca-templates-indicator">
+            {{ range $item := .CertificateAuthorities }}
+            <option value="{{ $item.ID }}">{{ $item.Name }}</option>
             {{ end }}
           </select>
-          <div class="invalid-feedback">
-            please provide a valid cryptographic api
+        </div>
+
+        <div class="col-md-4">
+          <label for="templates" class="form-label">Template</label>
+          <select class="form-select" id="templates" name="template">
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label for="ca-templates-indicator" class="form-label"></label>
+          <div id="ca-templates-indicator" class="htmx-indicator spinner-border text-light d-flex align-items-center"
+            style="width: 1.35rem; height: 1.35rem; margin: auto 0;" role="status">
+            <span class="visually-hidden">loading</span>
           </div>
         </div>
       </div>
-  </div>
+    </div>
+    <hr class="my-4">
 
-  <hr class="my-4">
-
-  <!-- <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="same-address">
-            <label class="form-check-label" for="same-address">Shipping address is the same as my billing address</label>
-          </div>
-
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="save-info">
-            <label class="form-check-label" for="save-info">Save this information for next time</label>
-          </div> -->
-
-  <!-- <hr class="my-4"> -->
-
-  <button class="w-100 btn btn-primary btn-lg" type="submit">Submit</button>
+    <button class="w-100 btn btn-primary btn-lg" type="submit">Submit</button>
   </form>
-  </div>
 </section>
 {{ end }}
