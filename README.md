@@ -39,3 +39,4 @@ docker run --rm -v $(pwd):/src -w /src sqlc/sqlc generate
 * [x] issue certs using adcs from linux
 * [] create installation docs
 * [] create ci
+* [] encrypt secrets
