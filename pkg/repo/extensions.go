@@ -1,15 +1,17 @@
 package repo
 
 const (
-	Pending  int64 = 1
-	Approved int64 = 2
-	Rejected int64 = 3
-	Revoked  int64 = 4
-	Issued   int64 = 5
+	Pending   int64 = 1
+	Approved  int64 = 2
+	Rejected  int64 = 3
+	Revoked   int64 = 4
+	Issued    int64 = 5
+	Failed    int64 = 6
+	Completed int64 = 7
 )
 
-func (c *CertificateRequestsAndHashAlgorithmRow) StatusString() string {
-	switch c.Status.Int64 {
+func (c *CertificatesAndHashAlgorithmPaginatedRow) StatusString() string {
+	switch c.Status {
 	case Pending:
 		return "Pending"
 	case Approved:
@@ -20,8 +22,33 @@ func (c *CertificateRequestsAndHashAlgorithmRow) StatusString() string {
 		return "Revoked"
 	case Issued:
 		return "Issued"
+	case Failed:
+		return "Failed"
+	case Completed:
+		return "Completed"
 	default:
 		return "Unknown"
+	}
+}
+
+func (c *CertificatesAndHashAlgorithmPaginatedRow) StatusStyle() string {
+	switch c.Status {
+	case Pending:
+		return "amber"
+	case Approved:
+		return "amber"
+	case Rejected:
+		return "red"
+	case Revoked:
+		return "red"
+	case Issued:
+		return "green"
+	case Failed:
+		return "red"
+	case Completed:
+		return "green"
+	default:
+		return "amber"
 	}
 }
 

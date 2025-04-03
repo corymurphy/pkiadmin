@@ -73,7 +73,7 @@ main {
 
 /* TODO this is just a copy paste fix this */
 
-.css-oqjyxw {
+.pki-badge {
   display: inline-block;
   white-space: nowrap;
   vertical-align: middle;
@@ -83,22 +83,21 @@ main {
   border-radius: 6px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.80);
-  box-shadow: var(--badge-shadow);
   padding-top: 6px;
   padding-bottom: 6px;
   background-color: #2c2d31;
   height: min-content;
 }
 
-.css-18e1wj0 {
+.pki-badge > .pki-stack {
   display: flex;
   -moz-box-align: center;
   align-items: center;
   flex-direction: column;
-  gap: var(--chakra-space-1);
+  gap: 0.25rem;
 }
 
-.css-6jcppe {
+.pki-badge-content-grid {
   display: grid;
   grid-template-columns: auto 1fr;
   -moz-box-align: center;
@@ -106,26 +105,17 @@ main {
   width: 100%;
 }
 
-.css-1xc4fct {
-  background-color: #5eb817;
-  border-radius: 50%;
-  display: inline-block;
-  height: 8px;
-  margin-right: 0.5rem;
-  width: 8px;
-}
-
 .css-xi606m {
   text-align: center;
 }
 
-.css-zylzbl {
+.pki-badge-text {
   line-height: 22px;
   flex: 1 1 0%;
   font-size: 0.625rem;
 }
 
-.css-16vr4dd {
+.pki-stack.align-items-center {
   display: flex;
   -moz-box-align: center;
   align-items: center;
@@ -134,14 +124,7 @@ main {
   max-width: 35em;
 }
 
-.css-zylzbl {
-  line-height: 22px;
-  flex: 1 1 0%;
-  font-size: 0.625rem;
-}
-
-.css-5dfj4m {
-  background-color: rgba(220, 53, 69, 1);
+.pki-badge-indicator {
   border-radius: 50%;
   display: inline-block;
   height: 8px;
@@ -149,15 +132,17 @@ main {
   width: 8px;
 }
 
-.css-jyhuqh {
+.pki-badge-indicator.amber {
   background-color: #d7a936;
-  border-radius: 50%;
-  display: inline-block;
-  height: 8px;
-  margin-right: 0.5rem;
-  width: 8px;
 }
 
+.pki-badge-indicator.green {
+  background-color: #5eb817;
+}
+
+.pki-badge-indicator.red {
+  background-color: rgba(220, 53, 69, 1);
+}
 
 /* foldable table */
 

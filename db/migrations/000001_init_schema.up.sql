@@ -27,30 +27,39 @@ CREATE TABLE "certificate_contents" (
   "content" BLOB NOT NULL,
   "updated_at" timestamp NOT NULL,
   "created_at" timestamp NOT NULL,
-  "certificate_request_id" integer NOT NULL,
+  "certificate_id" integer NOT NULL,
 
-  FOREIGN KEY(certificate_request_id) REFERENCES certificate_requests(id)
+  FOREIGN KEY(certificate_id) REFERENCES certificates(id)
 );
 
-CREATE TABLE "certificate_requests" (
+CREATE TABLE "certificates" (
   "id" integer PRIMARY KEY,
-  "display_name" varchar,
-  "signing_algorithm" varchar,
-  "key_length" integer,
-  "status" integer,
+  "display_name" varchar NOT NULL,
+  "common_name" varchar NOT NULL,
+  "organization" varchar,
+  "subject_alternative_names" varchar,
+  "key_length" integer NOT NULL,
+  "status" integer NOT NULL,
   "status_message" varchar,
-  "requested_on" timestamp,
-  "certificate_cryptographic_api_id" integer,
-  "signing_request_api_id" integer,
-  "cipher_algorithm_id" integer,
-  "hash_algorithm_id" integer,
+  "requested_on" timestamp NOT NULL,
+  "cipher_algorithm_id" integer NOT NULL,
+  "hash_algorithm_id" integer NOT NULL,
   "certificate_contents_id" integer,
 
-  FOREIGN KEY(certificate_cryptographic_api_id) REFERENCES certificate_cryptographic_api(id),
-  FOREIGN KEY(signing_request_api_id) REFERENCES signing_request_api(id),
   FOREIGN KEY(hash_algorithm_id) REFERENCES hash_algorithm(id),
   FOREIGN KEY(cipher_algorithm_id) REFERENCES cipher_algorithm(id),
   FOREIGN KEY(certificate_contents_id) REFERENCES certificate_contents(id)
+);
+
+CREATE TABLE "certificate_timeline" (
+  "id" integer PRIMARY KEY NOT NULL,
+  "certificate_id" integer NOT NULL,
+  "event" integer NOT NULL,
+  "status" integer NOT NULL,
+  "updated_at" timestamp NOT NULL,
+  "created_at" timestamp NOT NULL,
+
+  FOREIGN KEY(certificate_id) REFERENCES certificates(id)
 );
 
 CREATE TABLE "certificate_authorities" (
@@ -60,6 +69,16 @@ CREATE TABLE "certificate_authorities" (
   "credential_id" integer NOT NULL,
 
   FOREIGN KEY(credential_id) REFERENCES credentials(id)
+);
+
+CREATE TABLE "certificate_request_authority" (
+  "id" integer PRIMARY KEY,
+  "certificate_id" integer NOT NULL,
+  "certificate_authority_id" integer NOT NULL,
+  "template_name" varchar NOT NULL,
+
+  FOREIGN KEY(certificate_id) REFERENCES certificates(id),
+  FOREIGN KEY(certificate_authority_id) REFERENCES certificate_authorities(id)
 );
 
 CREATE TABLE "credentials" (
@@ -146,16 +165,5 @@ INSERT INTO "cipher_algorithm" (name, keysize) VALUES
 ('ecdh_p384', 384),
 ('ecdh_p521', 521);
 
-INSERT INTO "certificate_requests" (display_name, key_length, status, hash_algorithm_id, cipher_algorithm_id, certificate_cryptographic_api_id, signing_request_api_id) VALUES
-('example.com', 2048, 1, 2, 1, 2, 2);
-
-CREATE TABLE "certificate_requests_timeline" (
-  "id" integer PRIMARY KEY NOT NULL,
-  "certificate_request_id" integer NOT NULL,
-  "event" integer NOT NULL,
-  "status" integer NOT NULL,
-  "updated_at" timestamp NOT NULL,
-  "created_at" timestamp NOT NULL,
-
-  FOREIGN KEY(certificate_request_id) REFERENCES certificate_requests(id)
-);
+INSERT INTO "certificates" (display_name, common_name, key_length, status, hash_algorithm_id, cipher_algorithm_id, requested_on) VALUES
+('example.com', 'example.com', 2048, 1, 2, 1, '2019-01-01 00:00:00');

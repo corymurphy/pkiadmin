@@ -9,35 +9,27 @@
           <th scope="col">KeyLength</th>
           <th scope="col">Hash</th>
           <th scope="col">Cipher</th>
-          <th scope="col">SigningApi</th>
           <th scope="col">Status</th>
           <th scope="col">Action</th>
         </tr>
       </thead>
       <tbody>
-        {{range $item := .CertificateRequests }}
+        {{range $item := .Certificates }}
         <tr id="request-{{ .ID }}">
           <th scope="row">{{ .ID }}</th>
-          <td>{{ .DisplayName.String }}</td>
-          <td>{{ .KeyLength.Int64 }}</td>
+          <td>{{ .DisplayName }}</td>
+          <td>{{ .KeyLength }}</td>
           <td>{{ .HashAlgorithm.String }}</td>
           <td>{{ .CipherAlgorithm.String }}</td>
-          <td>{{ .SigningRequestApi.String }}</td>
           <td>
-            <div class="chakra-stack css-16vr4dd">
-              <span class="chakra-badge css-oqjyxw">
-                <div class="chakra-stack css-18e1wj0">
-                  <div class="css-6jcppe">
-                    <div class="css-0">
-                      <div class="css-jyhuqh"></div>
-                    </div>
-                    <div class="css-xi606m">
-                      <div class="chakra-stack css-1hohgv6">
-                        <p style="margin:0;" class="chakra-text css-zylzbl">
-                          <span id="request-status-{{ .ID }}">{{ .StatusString }}</span>
-                        </p>
-                      </div>
-                    </div>
+            <div class="pki-stack align-items-center">
+              <span class="pki-badge">
+                <div class="pki-stack">
+                  <div class="pki-badge-content-grid">
+                    <div class="pki-badge-indicator {{ .StatusStyle }}"></div>
+                    <p style="margin:0;" class="pki-badge-text">
+                      <span id="request-status-{{ .ID }}">{{ .StatusString }}</span>
+                    </p>
                   </div>
                 </div>
               </span>
@@ -84,6 +76,33 @@
         {{ end }}
       </tbody>
     </table>
+    <div class="row">
+      <div class="col-sm-12 col-md-5">
+        showing certificates {{ .Start }} to {{ .End }} of {{ .CertificateCount }}
+      </div>
+      <div class="col-sm-12 col-md-7">
+        <nav aria-label="Page navigation example">
+          <ul class="pagination justify-content-end">
+            <!-- <li class="page-item disabled">
+              <a class="page-link">Previous</a>
+            </li> -->
+            {{ range $i, $x := .Pages }}
+            {{ if eq $i $.Page }}
+            <li class="page-item active"><a class="page-link" href="#">{{ $i }}</a></li>
+            {{ else }}
+            <li class="page-item"><a class="page-link" href="?page={{ $i }}">{{ $i }}</a></li>
+            {{ end }}
+            {{ end }}
+            <!-- <li class="page-item"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li> -->
+            <!-- <li class="page-item">
+              <a class="page-link" href="#">Next</a>
+            </li> -->
+          </ul>
+        </nav>
+      </div>
+    </div>
   </div>
 </section>
 {{ end }}

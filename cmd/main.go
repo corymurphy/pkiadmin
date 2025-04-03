@@ -20,6 +20,7 @@ import (
 	"github.com/corymurphy/pkiadmin/pkg/certificates"
 	"github.com/corymurphy/pkiadmin/pkg/repo"
 	"github.com/corymurphy/pkiadmin/pkg/scheduling"
+	"github.com/corymurphy/pkiadmin/pkg/shared"
 	"github.com/corymurphy/pkiadmin/views"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -92,7 +93,11 @@ func main() {
 		panic(err)
 	}
 
-	m.Up() // TODO: this returns an error if there are no changes, look into this
+	err = m.Up() // TODO: this returns an error if there are no changes, look into this
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	e := echo.New()
 	// e.Use(middleware.Logger())
 
@@ -129,10 +134,10 @@ func main() {
 			"toLower": func(s string) string {
 				return strings.ToLower(s)
 			},
-			"RequestTimelineStatusString": func(status int64) string {
+			"CertificateTimelineStatusString": func(status int64) string {
 				return certificates.RequestTimelineStatus(status).String()
 			},
-			"RequestTimelineEventString": func(event int64) string {
+			"CertificateTimelineEventString": func(event int64) string {
 				return certificates.RequestTimelineEvent(event).String()
 			},
 			// TODO use generics
@@ -165,9 +170,11 @@ func main() {
 
 	e.POST("/certificates/request", func(c echo.Context) error {
 		ctx := context.Background()
-		// fmt.Println("here")
 
-		displayName := c.FormValue("displayName")
+		cn := c.FormValue("cn")
+		template := c.FormValue("template")
+		org := c.FormValue("org")
+		san := c.FormValue("san")
 
 		keyLength, err := strconv.ParseInt(c.FormValue("keyLength"), 10, 64)
 		if err != nil {
@@ -176,37 +183,40 @@ func main() {
 
 		hashAlgorithmId, err := strconv.ParseInt(c.FormValue("hashAlgorithmId"), 10, 64)
 		if err != nil {
-			return c.String(400, "invalid keylength")
+			return c.String(400, "invalid hash algorithm")
 		}
 
 		cipherAlgorithmId, err := strconv.ParseInt(c.FormValue("cipherAlgorithmId"), 10, 64)
 		if err != nil {
-			return c.String(400, "invalid keylength")
+			return c.String(400, "invalid cipher algorithm")
 		}
 
-		cryptoApiId, err := strconv.ParseInt(c.FormValue("cryptoApiId"), 10, 64)
+		ca, err := strconv.ParseInt(c.FormValue("ca"), 10, 64)
 		if err != nil {
-			return c.String(400, "invalid keylength")
-		}
-
-		signingRequestApiId, err := strconv.ParseInt(c.FormValue("signingRequestApiId"), 10, 64)
-		if err != nil {
-			return c.String(400, "invalid keylength")
+			return c.String(400, "invalid ca")
 		}
 
 		now := time.Now()
-		request, err := queries.CreateCertificateRequest(ctx, repo.CreateCertificateRequestParams{
-			DisplayName:                   sql.NullString{String: displayName, Valid: true},
-			KeyLength:                     sql.NullInt64{Int64: keyLength, Valid: true},
-			HashAlgorithmID:               sql.NullInt64{Int64: hashAlgorithmId, Valid: true},
-			CipherAlgorithmID:             sql.NullInt64{Int64: cipherAlgorithmId, Valid: true},
-			CertificateCryptographicApiID: sql.NullInt64{Int64: cryptoApiId, Valid: true},
-			SigningRequestApiID:           sql.NullInt64{Int64: signingRequestApiId, Valid: true},
-			RequestedOn:                   sql.NullTime{Time: now, Valid: true},
+		request, err := queries.CreateCertificate(ctx, repo.CreateCertificateParams{
+			DisplayName:             cn,
+			Organization:            sql.NullString{String: org, Valid: true},
+			SubjectAlternativeNames: sql.NullString{String: san, Valid: true},
+			KeyLength:               keyLength,
+			HashAlgorithmID:         hashAlgorithmId,
+			CipherAlgorithmID:       cipherAlgorithmId,
+			RequestedOn:             now,
 		})
-
 		if err != nil {
-			return c.String(500, "something happened")
+			return c.String(500, fmt.Errorf("error creating certificate request: %w", err).Error())
+		}
+
+		_, err = queries.CreateCertificateRequestAuthority(ctx, repo.CreateCertificateRequestAuthorityParams{
+			CertificateID:          request,
+			CertificateAuthorityID: ca,
+			TemplateName:           template,
+		})
+		if err != nil {
+			return c.String(500, fmt.Errorf("error creating certificate request authority: %w", err).Error())
 		}
 
 		timeline := []struct{ Status, Event int64 }{
@@ -218,15 +228,15 @@ func main() {
 		}
 
 		for _, t := range timeline {
-			_, err = queries.CreateCertificateRequestTimeline(ctx, repo.CreateCertificateRequestTimelineParams{
-				CertificateRequestID: request,
-				Event:                t.Event,
-				Status:               t.Status,
-				CreatedAt:            now,
-				UpdatedAt:            now,
+			_, err = queries.CreateCertificateTimeline(ctx, repo.CreateCertificateTimelineParams{
+				CertificateID: request,
+				Event:         t.Event,
+				Status:        t.Status,
+				CreatedAt:     now,
+				UpdatedAt:     now,
 			})
 			if err != nil {
-				return c.String(500, "something happened")
+				return c.String(500, fmt.Errorf("error creating certificate request timeline: %w", err).Error())
 			}
 		}
 
@@ -270,17 +280,44 @@ func main() {
 
 	e.GET("requests/list.html", func(c echo.Context) error {
 		ctx := context.Background()
-		// requests, err := queries.ListCertificateRequest(ctx)
-		requests, err := queries.CertificateRequestsAndHashAlgorithm(ctx)
+		// requests, err := queries.ListCertificate(ctx)
+		// requests, err := queries.CertificatesAndHashAlgorithm(ctx)
 
-		// requests[0].CertificateCryptographicApi
-		// requests[0].SigningRequestApi
+		page, err := strconv.ParseInt(c.QueryParam("page"), 10, 64)
+		if err != nil {
+			page = 0
+		}
+		limit, err := strconv.ParseInt(c.QueryParam("limit"), 10, 64)
+		if err != nil {
+			limit = 10
+		}
+		fmt.Println(page, limit)
+
+		count, err := queries.GetCertificatesCount(ctx)
+		if err != nil {
+			return c.Render(500, "error", err)
+		}
+
+		requests, err := queries.CertificatesAndHashAlgorithmPaginated(ctx, repo.CertificatesAndHashAlgorithmPaginatedParams{
+			Limit:  limit,
+			Offset: page * limit,
+		})
 
 		if err != nil {
 			return c.Render(500, "error", err)
 		}
 		data := make(map[string]interface{})
-		data["CertificateRequests"] = requests
+		data["Certificates"] = requests
+		data["CertificateCount"] = count
+		data["Pages"] = make([]int, shared.RoundUp(float64(count)/float64(limit)))
+		data["Page"] = page
+		data["Start"] = page * limit
+
+		if ((limit * page) + limit) > count {
+			data["End"] = count
+		} else {
+			data["End"] = (limit * page) + limit
+		}
 
 		return c.Render(http.StatusOK, "requests/list.html", data)
 	})
@@ -292,12 +329,12 @@ func main() {
 			return c.String(400, "invalid id")
 		}
 		time.Sleep(1 * time.Second)
-		err = queries.DeleteCertificateRequest(ctx, id)
+		err = queries.DeleteCertificate(ctx, id)
 		if err != nil {
 			return c.String(500, "something happened")
 		}
 
-		queries.DeleteCertificateRequestTimelines(ctx, id)
+		queries.DeleteCertificateTimelines(ctx, id)
 		return c.NoContent(200)
 	})
 
@@ -309,17 +346,17 @@ func main() {
 			return c.String(400, "invalid id")
 		}
 
-		req, err := queries.GetCertificateRequest(ctx, id)
+		req, err := queries.GetCertificate(ctx, id)
 		if err != nil {
 			return c.String(500, "Unable to approve request")
 		}
-		if req.Status.Int64 == repo.Approved {
+		if req.Status == repo.Approved {
 			return c.String(400, "request already approved")
 		}
 
-		err = queries.UpdateCertificateRequestStatus(ctx,
-			repo.UpdateCertificateRequestStatusParams{
-				Status: sql.NullInt64{Int64: repo.Approved, Valid: true},
+		err = queries.UpdateCertificateStatus(ctx,
+			repo.UpdateCertificateStatusParams{
+				Status: repo.Approved,
 				ID:     id,
 			})
 
@@ -327,12 +364,12 @@ func main() {
 			return c.String(500, "Unable to approve request")
 		}
 
-		queries.UpdateCertificateRequestTimelineByRequest(ctx,
-			repo.UpdateCertificateRequestTimelineByRequestParams{
-				CertificateRequestID: id,
-				Event:                int64(certificates.Approved),
-				Status:               int64(certificates.Completed),
-				UpdatedAt:            time.Now(),
+		queries.UpdateCertificateTimelineByRequest(ctx,
+			repo.UpdateCertificateTimelineByRequestParams{
+				CertificateID: id,
+				Event:         int64(certificates.Approved),
+				Status:        int64(certificates.Completed),
+				UpdatedAt:     time.Now(),
 			})
 
 		performAt := time.Now().Add((5 * time.Second))
@@ -342,10 +379,10 @@ func main() {
 			RetryCount: 0,
 			CreatedAt:  time.Now(),
 			Arguments: certificates.CreateRsaCsrArguments{
-				Organization: []string{"PkiAdmin"},
-				CommonName:   req.DisplayName.String,
-				DNSNames:     []string{req.DisplayName.String},
-				KeyLength:    int(req.KeyLength.Int64),
+				Organization: []string{req.Organization.String},
+				CommonName:   req.DisplayName,
+				DNSNames:     []string{req.DisplayName},
+				KeyLength:    int(req.KeyLength),
 				ID:           id,
 			},
 		})
@@ -356,34 +393,43 @@ func main() {
 	e.GET("requests/view/:id", func(c echo.Context) error {
 		ctx := context.Background()
 
-		idStr := c.Param("id")
-
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 		if err != nil {
 			return c.String(400, "invalid id")
 		}
 
-		id, err := strconv.ParseInt(idStr, 10, 64)
-		if err != nil {
-			return c.String(400, "invalid id")
-		}
-
-		request, err := queries.GetCertificateRequestDetailed(ctx, id)
+		request, err := queries.GetCertificateDetailed(ctx, id)
 
 		if err != nil {
 			fmt.Println("error getting request", err)
 			return c.Render(500, "error", err)
 		}
 
-		timeline, _ := queries.ListCertificateRequestTimeline(ctx, request.ID)
+		timeline, _ := queries.ListCertificateTimeline(ctx, request.ID)
 		contents, err := queries.ListCertificateContent(ctx, id)
 		if err != nil {
 			fmt.Println("error getting contents", err)
 		}
 
+		// cert := []byte{}
+		// privateKey := []byte{}
+		// for _, content := range contents {
+		// 	if content.Name == "certificate" {
+		// 		cert = content.Content
+		// 	}
+		// 	if content.Name == "privatekey" {
+		// 		privateKey = content.Content
+		// 	}
+		// }
+
+		// if len(cert) > 0 && len(privateKey) > 0 {
+
+		// }
+
 		data := make(map[string]interface{})
 		data["ID"] = request.ID
-		data["DisplayName"] = request.DisplayName.String
-		data["KeyLength"] = request.KeyLength.Int64
+		data["DisplayName"] = request.DisplayName
+		data["KeyLength"] = request.KeyLength
 		data["HashAlgorithm"] = request.HashAlgorithm.String
 		data["CipherAlgorithm"] = request.CipherAlgorithm.String
 
@@ -392,23 +438,51 @@ func main() {
 
 		csrContent, err := queries.GetCertificateContentByNameEncodingRequestID(ctx,
 			repo.GetCertificateContentByNameEncodingRequestIDParams{
-				Name:                 "csr",
-				Encoding:             "der",
-				CertificateRequestID: id,
+				Name:          "csr",
+				Encoding:      "der",
+				CertificateID: id,
 			})
 		if err != nil {
 			return c.Render(http.StatusOK, "requests/view.html", data)
 		}
 
 		csr, err := x509.ParseCertificateRequest(csrContent.Content)
-		sigHash := sha1.Sum(csr.Signature)
 		if err != nil {
+			fmt.Println("error parsing csr", err)
 			return c.Render(http.StatusOK, "requests/view.html", data)
 		}
 
+		sigHash := sha1.Sum(csr.Signature)
 		data["Thumbprint"] = hex.EncodeToString(sigHash[:])
 
 		return c.Render(http.StatusOK, "requests/view.html", data)
+	})
+
+	e.GET("certificates/:id/download", func(c echo.Context) error {
+		ctx := context.Background()
+
+		name := c.QueryParam("name")
+		encoding := c.QueryParam("encoding")
+		id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+		if err != nil {
+			return c.String(400, "invalid id")
+		}
+
+		contents, err := queries.ListCertificateContent(ctx, id)
+		if err != nil {
+			return c.Render(500, "error", err)
+		}
+		for _, content := range contents {
+			if content.Name == name && content.Encoding == encoding {
+				c.Response().Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.%s", name, encoding))
+				c.Response().Header().Set("Content-Length", fmt.Sprintf("%d", len(content.Content)))
+				c.Response().Header().Set("Content-Type", "application/x-x509-ca-cert")
+				c.Response().Write(content.Content)
+				c.Response().WriteHeader(200)
+				return nil
+			}
+		}
+		return c.String(404, "certificate content not found")
 	})
 
 	// e.GET("requests/:id/download/csr.pem", func(c echo.Context) error {
@@ -425,7 +499,7 @@ func main() {
 	// 		return c.String(400, "invalid id")
 	// 	}
 
-	// 	request, err := queries.GetCertificateRequestWithContent(ctx, id)
+	// 	request, err := queries.GetCertificateWithContent(ctx, id)
 
 	// 	if err != nil {
 	// 		return c.Render(500, "error", err)
@@ -454,7 +528,7 @@ func main() {
 	// 		return c.String(400, "invalid id")
 	// 	}
 
-	// 	request, err := queries.GetCertificateRequestWithContent(ctx, id)
+	// 	request, err := queries.GetCertificateWithContent(ctx, id)
 
 	// 	if err != nil {
 	// 		return c.Render(500, "error", err)
@@ -503,6 +577,9 @@ func main() {
 
 		data := make(map[string]interface{})
 		data["ID"] = idStr
+		data["Color"] = "green"
+		data["URL"] = "/ca/status/{{ .ID }}"
+		data["Message"] = "Connected"
 
 		id, err := strconv.ParseInt(idStr, 10, 64)
 		if err != nil {
@@ -523,9 +600,10 @@ func main() {
 		err = ca.Ping()
 
 		if err != nil {
-			return c.Render(200, "badge-disconnected", data)
+			data["Color"] = "red"
+			data["Message"] = "Disconnected"
 		}
-		return c.Render(200, "badge-connected", data)
+		return c.Render(200, "badge-trigger", data)
 	})
 
 	e.DELETE("ca/:id", func(c echo.Context) error {
@@ -597,10 +675,7 @@ func main() {
 				adcs.WithPort("135"), // TODO: get from repo
 			)
 
-			templates, err := ca.Templates(ctx)
-			if err != nil {
-				return c.Render(500, "error", err)
-			}
+			templates, _ := ca.Templates(ctx)
 
 			caList = append(caList, struct {
 				ID        int64

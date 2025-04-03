@@ -124,85 +124,105 @@ DELETE FROM hash_algorithm
 WHERE id = ?;
 
 --------------------------------------------
--- certificate_requests
+-- certificates
 --------------------------------------------
 
--- name: GetCertificateRequest :one
+-- name: GetCertificate :one
 SELECT id,
       display_name,
-      signing_algorithm,
+      common_name,
+      organization,
+      subject_alternative_names,
       key_length,
       status,
       status_message,
       requested_on,
-      certificate_cryptographic_api_id,
-      signing_request_api_id,
       cipher_algorithm_id,
       hash_algorithm_id
-FROM certificate_requests
+FROM certificates
 WHERE id = ? LIMIT 1;
 
--- name: GetCertificateRequestDetailed :one
+-- name: GetCertificateDetailed :one
 SELECT r.id AS id,
       r.display_name AS display_name,
+      r.common_name AS common_name,
+      r.organization AS organization,
+      r.subject_alternative_names AS subject_alternative_names,
       r.key_length AS key_length,
       r.requested_on AS requested_on,
       r.status AS status,
       r.status_message AS status_message,
       h.name AS hash_algorithm,
-      c.name AS cipher_algorithm,
-      s.name AS signing_request_api,
-      capi.name as certificate_cryptographic_api
-FROM certificate_requests r
+      c.name AS cipher_algorithm
+FROM certificates r
 INNER JOIN hash_algorithm h ON r.hash_algorithm_id = h.id
 INNER JOIN cipher_algorithm c ON r.cipher_algorithm_id = c.id
-INNER JOIN signing_request_api s ON r.signing_request_api_id = s.id
-INNER JOIN certificate_cryptographic_api capi ON r.certificate_cryptographic_api_id = capi.id
 WHERE r.id = ? LIMIT 1;
 
--- name: ListCertificateRequest :many
+-- name: ListCertificate :many
 SELECT id,
       display_name,
-      signing_algorithm,
+      common_name,
+      organization,
+      subject_alternative_names,
       key_length,
       status,
       status_message,
       requested_on,
-      certificate_cryptographic_api_id,
-      signing_request_api_id,
       cipher_algorithm_id,
       hash_algorithm_id
-FROM certificate_requests
+FROM certificates
 ORDER BY id;
 
--- name: CertificateRequestsAndHashAlgorithm :many
+-- name: CertificatesAndHashAlgorithm :many
 SELECT r.id AS id,
       r.display_name AS display_name,
+      r.common_name AS common_name,
+      r.organization AS organization,
+      r.subject_alternative_names AS subject_alternative_names,
       r.key_length AS key_length,
       r.requested_on AS requested_on,
       r.status AS status,
       r.status_message AS status_message,
       h.name AS hash_algorithm,
-      c.name AS cipher_algorithm,
-      s.name AS signing_request_api,
-      capi.name as certificate_cryptographic_api
-FROM certificate_requests r
+      c.name AS cipher_algorithm
+FROM certificates r
 INNER JOIN hash_algorithm h ON r.hash_algorithm_id = h.id
 INNER JOIN cipher_algorithm c ON r.cipher_algorithm_id = c.id
-INNER JOIN signing_request_api s ON r.signing_request_api_id = s.id
-INNER JOIN certificate_cryptographic_api capi ON r.certificate_cryptographic_api_id = capi.id
 ORDER BY r.id;
 
--- name: CreateCertificateRequest :one
-INSERT INTO certificate_requests (
+-- name: CertificatesAndHashAlgorithmPaginated :many
+SELECT r.id AS id,
+      r.display_name AS display_name,
+      r.common_name AS common_name,
+      r.organization AS organization,
+      r.subject_alternative_names AS subject_alternative_names,
+      r.key_length AS key_length,
+      r.requested_on AS requested_on,
+      r.status AS status,
+      r.status_message AS status_message,
+      h.name AS hash_algorithm,
+      c.name AS cipher_algorithm
+FROM certificates r
+INNER JOIN hash_algorithm h ON r.hash_algorithm_id = h.id
+INNER JOIN cipher_algorithm c ON r.cipher_algorithm_id = c.id
+ORDER BY r.requested_on DESC
+LIMIT ? OFFSET ?;
+
+-- name: GetCertificatesCount :one
+SELECT COUNT(*) as count
+FROM certificates;
+
+-- name: CreateCertificate :one
+INSERT INTO certificates (
       display_name,
-      signing_algorithm,
+      common_name,
+      organization,
+      subject_alternative_names,
       key_length,
       status,
       status_message,
       requested_on,
-      certificate_cryptographic_api_id,
-      signing_request_api_id,
       cipher_algorithm_id,
       hash_algorithm_id
 ) VALUES (
@@ -210,12 +230,12 @@ INSERT INTO certificate_requests (
 )
 RETURNING id;
 
--- name: DeleteCertificateRequest :exec
-DELETE FROM certificate_requests
+-- name: DeleteCertificate :exec
+DELETE FROM certificates
 WHERE id = ?;
 
--- name: UpdateCertificateRequestStatus :exec
-UPDATE certificate_requests
+-- name: UpdateCertificateStatus :exec
+UPDATE certificates
 set status = ?, status_message = ?
 WHERE id = ?;
 
@@ -556,26 +576,26 @@ SELECT COUNT(*) as count FROM scheduler_completed;
 --------------------------------------------
 
 -- name: GetCertificateContent :one
-SELECT id, name, encoding, content, updated_at, created_at, certificate_request_id
+SELECT id, name, encoding, content, updated_at, created_at, certificate_id
 FROM certificate_contents
 WHERE id = ? LIMIT 1;
 
 -- name: GetCertificateContentByNameEncodingRequestID :one
-SELECT id, name, encoding, content, updated_at, created_at, certificate_request_id
+SELECT id, name, encoding, content, updated_at, created_at, certificate_id
 FROM certificate_contents
-WHERE certificate_request_id = ? AND name = ? AND encoding = ? LIMIT 1;
+WHERE certificate_id = ? AND name = ? AND encoding = ? LIMIT 1;
 
 -- name: ListCertificateContent :many
-SELECT id, name, encoding, content, updated_at, created_at, certificate_request_id
+SELECT id, name, encoding, content, updated_at, created_at, certificate_id
 FROM certificate_contents
-WHERE certificate_request_id = ?;
+WHERE certificate_id = ?;
 
 -- name: CreateCertificateContent :one
 INSERT INTO certificate_contents (
   name,
   encoding,
   content,
-  certificate_request_id,
+  certificate_id,
   updated_at,
   created_at
 ) VALUES (
@@ -584,23 +604,23 @@ INSERT INTO certificate_contents (
 RETURNING id;
 
 --------------------------------------------
--- certificate_requests_timeline
+-- certificate_timeline
 --------------------------------------------
 
--- name: GetCertificateRequestTimeline :one
-SELECT id, certificate_request_id, status, event, created_at, updated_at
-FROM certificate_requests_timeline
+-- name: GetCertificateTimeline :one
+SELECT id, certificate_id, status, event, created_at, updated_at
+FROM certificate_timeline
 WHERE id = ? LIMIT 1;
 
--- name: ListCertificateRequestTimeline :many
-SELECT id, certificate_request_id, status, event, created_at, updated_at
-FROM certificate_requests_timeline
-WHERE certificate_request_id = ?
+-- name: ListCertificateTimeline :many
+SELECT id, certificate_id, status, event, created_at, updated_at
+FROM certificate_timeline
+WHERE certificate_id = ?
 ORDER BY id;
 
--- name: CreateCertificateRequestTimeline :one
-INSERT INTO certificate_requests_timeline (
-  certificate_request_id,
+-- name: CreateCertificateTimeline :one
+INSERT INTO certificate_timeline (
+  certificate_id,
   status,
   event,
   created_at,
@@ -610,26 +630,53 @@ INSERT INTO certificate_requests_timeline (
 )
 RETURNING id;
 
--- name: GetCertificateRequestTimelineByRequest :one
-SELECT id, certificate_request_id, status, event, created_at, updated_at
-FROM certificate_requests_timeline
-WHERE certificate_request_id = ? AND event = ? LIMIT 1;
+-- name: GetCertificateTimelineByRequest :one
+SELECT id, certificate_id, status, event, created_at, updated_at
+FROM certificate_timeline
+WHERE certificate_id = ? AND event = ? LIMIT 1;
 
--- name: UpdateCertificateRequestTimeline :exec
-UPDATE certificate_requests_timeline
+-- name: UpdateCertificateTimeline :exec
+UPDATE certificate_timeline
 SET status = ?, event = ?, updated_at = ?
 WHERE id = ?;
 
--- name: UpdateCertificateRequestTimelineByRequest :exec
-UPDATE certificate_requests_timeline
+-- name: UpdateCertificateTimelineByRequest :exec
+UPDATE certificate_timeline
 SET status = ?, updated_at = ?
-WHERE certificate_request_id = ? AND event = ?;
+WHERE certificate_id = ? AND event = ?;
 
--- name: DeleteCertificateRequestTimeline :exec
-DELETE FROM certificate_requests_timeline
+-- name: DeleteCertificateTimeline :exec
+DELETE FROM certificate_timeline
 WHERE id = ?;
 
--- name: DeleteCertificateRequestTimelines :exec
-DELETE FROM certificate_requests_timeline
-WHERE certificate_request_id = ?;
+-- name: DeleteCertificateTimelines :exec
+DELETE FROM certificate_timeline
+WHERE certificate_id = ?;
 
+--------------------------------------------
+-- certificate_request_authority
+--------------------------------------------
+
+-- name: GetCertificateRequestAuthority :one
+SELECT certificate_id, certificate_authority_id, template_name
+FROM certificate_request_authority
+WHERE certificate_id = ? LIMIT 1;
+
+-- name: ListCertificateRequestAuthority :many
+SELECT certificate_id, certificate_authority_id, template_name
+FROM certificate_request_authority
+WHERE certificate_id = ?;
+
+-- name: CreateCertificateRequestAuthority :one
+INSERT INTO certificate_request_authority (
+  certificate_id,
+  certificate_authority_id,
+  template_name
+) VALUES (
+  ?, ?, ?
+)
+RETURNING certificate_id;
+
+-- name: DeleteCertificateRequestAuthority :exec
+DELETE FROM certificate_request_authority
+WHERE certificate_id = ?;

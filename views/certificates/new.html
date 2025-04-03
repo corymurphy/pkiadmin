@@ -7,8 +7,8 @@
     <div class="my-3 p-3 bg-body rounded shadow-sm">
       <div class="row gy-3">
         <div class="col-md-4">
-          <label for="commonname" class="form-label">Common Name</label>
-          <input type="text" class="form-control" name="commonname" id="commonname" placeholder="example.com" value=""
+          <label for="cn" class="form-label">Common Name</label>
+          <input type="text" class="form-control" name="cn" id="cn" placeholder="example.com" value=""
             required>
         </div>
         <div class="col-md-4">
@@ -16,8 +16,8 @@
           <input type="text" class="form-control" name="san" id="san" placeholder="web1.example.com,*.example.com">
         </div>
         <div class="col-md-4">
-          <label for="orgname" class="form-label">Organization Name</label>
-          <input type="text" class="form-control" name="orgname" id="orgname" placeholder="example.com" value="">
+          <label for="org" class="form-label">Organization Name</label>
+          <input type="text" class="form-control" name="org" id="org" placeholder="example.com" value="">
         </div>
       </div>
     </div>
@@ -66,7 +66,7 @@
       <div class="row gy-3">
         <div class="col-md-4">
           <label for="ca" class="form-label">Certificate Authority</label>
-          <select class="form-select" name="ca" hx-get="/ca/templates.html" hx-target="#templates" hx-trigger="load"
+          <select class="form-select" name="ca" id="ca" hx-get="/ca/templates.html" hx-target="#template" hx-trigger="load"
             hx-indicator="#ca-templates-indicator">
             {{ range $item := .CertificateAuthorities }}
             <option value="{{ $item.ID }}">{{ $item.Name }}</option>
@@ -76,7 +76,7 @@
 
         <div class="col-md-4">
           <label for="templates" class="form-label">Template</label>
-          <select class="form-select" id="templates" name="template">
+          <select class="form-select" id="template" name="template">
           </select>
         </div>
 

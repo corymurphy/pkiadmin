@@ -1,8 +1,8 @@
 {{ define "content" }}
+{{ $certificateID := .ID }}
+
 <section class="table-components" style="padding-top: 15px; padding-left: 30px; padding-right: 30px;">
-  <div class="my-3 p-3 bg-body rounded shadow-sm">
-
-
+  <div class="my-3 p-3 bg-body rounded shadow-sm">    
     <div class="row">
       <div class="col-md-2">
         <img src="/images/certification-128.png" style="display: block; margin: auto; width: 75%; height: auto;"
@@ -10,10 +10,10 @@
         <section class="w-100 p-1 pt-4">
           <ul class="timeline">
             {{ range $item := .Timeline }}
-            <li class="{{ $item.Status | RequestTimelineStatusString | toLower }}">
-              <h5 style="font-size: .936rem;" class="mt-0 mb-1">{{ $item.Event | RequestTimelineEventString}}</h5>
-              {{ if ne ($item.Status | RequestTimelineStatusString | toLower) "pending" }}
-              <p class="font-14 text-muted {{ $item.Status | RequestTimelineStatusString | toLower }}">{{ $item.UpdatedAt.Format "Jan 02, 2006" }}</p>
+            <li class="{{ $item.Status | CertificateTimelineStatusString | toLower }}">
+              <h5 style="font-size: .936rem;" class="mt-0 mb-1">{{ $item.Event | CertificateTimelineEventString}}</h5>
+              {{ if ne ($item.Status | CertificateTimelineStatusString | toLower) "pending" }}
+              <p class="font-14 text-muted {{ $item.Status | CertificateTimelineStatusString | toLower }}">{{ $item.UpdatedAt.Format "Jan 02, 2006" }}</p>
               {{ end }}
             </li>
             {{ end }}
@@ -120,8 +120,8 @@
                   </td>
                   <td class="text-body-secondary">Updated on {{ .UpdatedAt.Format "Jan 02, 2006" }}</td>
                   <td style="width: 0">
-                    <a href="/requests/{{ .ID }}/download/privatekey.pem" class="btn btn-sm btn-primary"
-                      download>Download</a>
+                    <a href="/certificates/{{ $certificateID }}/download?name={{ .Name }}&encoding={{ .Encoding }}" class="btn btn-sm btn-primary"
+                      download="{{ .Name }}.{{ .Encoding }}">Download</a>
                   </td>
                 </tr>
                 {{ end }}

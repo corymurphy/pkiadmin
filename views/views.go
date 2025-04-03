@@ -151,10 +151,6 @@ func NewTemplates(views []string, partials []string, functions template.FuncMap)
 		templates: make(map[string]*template.Template),
 	}
 
-	for _, view := range views {
-		templates.Register(view, functions)
-	}
-
 	for _, partial := range partials {
 
 		tmpl := template.Must(template.ParseGlob(partial)).Funcs(functions)
@@ -168,6 +164,10 @@ func NewTemplates(views []string, partials []string, functions template.FuncMap)
 
 		// templates.Add(tmpl)
 
+	}
+
+	for _, view := range views {
+		templates.Register(view, functions)
 	}
 
 	// fmt.Println(templates)

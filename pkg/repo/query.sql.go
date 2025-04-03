@@ -13,58 +13,132 @@ import (
 	"github.com/google/uuid"
 )
 
-const certificateRequestsAndHashAlgorithm = `-- name: CertificateRequestsAndHashAlgorithm :many
+const certificatesAndHashAlgorithm = `-- name: CertificatesAndHashAlgorithm :many
 SELECT r.id AS id,
       r.display_name AS display_name,
+      r.common_name AS common_name,
+      r.organization AS organization,
+      r.subject_alternative_names AS subject_alternative_names,
       r.key_length AS key_length,
       r.requested_on AS requested_on,
       r.status AS status,
       r.status_message AS status_message,
       h.name AS hash_algorithm,
-      c.name AS cipher_algorithm,
-      s.name AS signing_request_api,
-      capi.name as certificate_cryptographic_api
-FROM certificate_requests r
+      c.name AS cipher_algorithm
+FROM certificates r
 INNER JOIN hash_algorithm h ON r.hash_algorithm_id = h.id
 INNER JOIN cipher_algorithm c ON r.cipher_algorithm_id = c.id
-INNER JOIN signing_request_api s ON r.signing_request_api_id = s.id
-INNER JOIN certificate_cryptographic_api capi ON r.certificate_cryptographic_api_id = capi.id
 ORDER BY r.id
 `
 
-type CertificateRequestsAndHashAlgorithmRow struct {
-	ID                          int64
-	DisplayName                 sql.NullString
-	KeyLength                   sql.NullInt64
-	RequestedOn                 sql.NullTime
-	Status                      sql.NullInt64
-	StatusMessage               sql.NullString
-	HashAlgorithm               sql.NullString
-	CipherAlgorithm             sql.NullString
-	SigningRequestApi           sql.NullString
-	CertificateCryptographicApi sql.NullString
+type CertificatesAndHashAlgorithmRow struct {
+	ID                      int64
+	DisplayName             string
+	CommonName              string
+	Organization            sql.NullString
+	SubjectAlternativeNames sql.NullString
+	KeyLength               int64
+	RequestedOn             time.Time
+	Status                  int64
+	StatusMessage           sql.NullString
+	HashAlgorithm           sql.NullString
+	CipherAlgorithm         sql.NullString
 }
 
-func (q *Queries) CertificateRequestsAndHashAlgorithm(ctx context.Context) ([]CertificateRequestsAndHashAlgorithmRow, error) {
-	rows, err := q.db.QueryContext(ctx, certificateRequestsAndHashAlgorithm)
+func (q *Queries) CertificatesAndHashAlgorithm(ctx context.Context) ([]CertificatesAndHashAlgorithmRow, error) {
+	rows, err := q.db.QueryContext(ctx, certificatesAndHashAlgorithm)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []CertificateRequestsAndHashAlgorithmRow
+	var items []CertificatesAndHashAlgorithmRow
 	for rows.Next() {
-		var i CertificateRequestsAndHashAlgorithmRow
+		var i CertificatesAndHashAlgorithmRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.DisplayName,
+			&i.CommonName,
+			&i.Organization,
+			&i.SubjectAlternativeNames,
 			&i.KeyLength,
 			&i.RequestedOn,
 			&i.Status,
 			&i.StatusMessage,
 			&i.HashAlgorithm,
 			&i.CipherAlgorithm,
-			&i.SigningRequestApi,
-			&i.CertificateCryptographicApi,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const certificatesAndHashAlgorithmPaginated = `-- name: CertificatesAndHashAlgorithmPaginated :many
+SELECT r.id AS id,
+      r.display_name AS display_name,
+      r.common_name AS common_name,
+      r.organization AS organization,
+      r.subject_alternative_names AS subject_alternative_names,
+      r.key_length AS key_length,
+      r.requested_on AS requested_on,
+      r.status AS status,
+      r.status_message AS status_message,
+      h.name AS hash_algorithm,
+      c.name AS cipher_algorithm
+FROM certificates r
+INNER JOIN hash_algorithm h ON r.hash_algorithm_id = h.id
+INNER JOIN cipher_algorithm c ON r.cipher_algorithm_id = c.id
+ORDER BY r.requested_on DESC
+LIMIT ? OFFSET ?
+`
+
+type CertificatesAndHashAlgorithmPaginatedParams struct {
+	Limit  int64
+	Offset int64
+}
+
+type CertificatesAndHashAlgorithmPaginatedRow struct {
+	ID                      int64
+	DisplayName             string
+	CommonName              string
+	Organization            sql.NullString
+	SubjectAlternativeNames sql.NullString
+	KeyLength               int64
+	RequestedOn             time.Time
+	Status                  int64
+	StatusMessage           sql.NullString
+	HashAlgorithm           sql.NullString
+	CipherAlgorithm         sql.NullString
+}
+
+func (q *Queries) CertificatesAndHashAlgorithmPaginated(ctx context.Context, arg CertificatesAndHashAlgorithmPaginatedParams) ([]CertificatesAndHashAlgorithmPaginatedRow, error) {
+	rows, err := q.db.QueryContext(ctx, certificatesAndHashAlgorithmPaginated, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []CertificatesAndHashAlgorithmPaginatedRow
+	for rows.Next() {
+		var i CertificatesAndHashAlgorithmPaginatedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.DisplayName,
+			&i.CommonName,
+			&i.Organization,
+			&i.SubjectAlternativeNames,
+			&i.KeyLength,
+			&i.RequestedOn,
+			&i.Status,
+			&i.StatusMessage,
+			&i.HashAlgorithm,
+			&i.CipherAlgorithm,
 		); err != nil {
 			return nil, err
 		}
@@ -155,6 +229,55 @@ func (q *Queries) CreateCertCryptoApi(ctx context.Context, arg CreateCertCryptoA
 	return i, err
 }
 
+const createCertificate = `-- name: CreateCertificate :one
+INSERT INTO certificates (
+      display_name,
+      common_name,
+      organization,
+      subject_alternative_names,
+      key_length,
+      status,
+      status_message,
+      requested_on,
+      cipher_algorithm_id,
+      hash_algorithm_id
+) VALUES (
+  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+)
+RETURNING id
+`
+
+type CreateCertificateParams struct {
+	DisplayName             string
+	CommonName              string
+	Organization            sql.NullString
+	SubjectAlternativeNames sql.NullString
+	KeyLength               int64
+	Status                  int64
+	StatusMessage           sql.NullString
+	RequestedOn             time.Time
+	CipherAlgorithmID       int64
+	HashAlgorithmID         int64
+}
+
+func (q *Queries) CreateCertificate(ctx context.Context, arg CreateCertificateParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createCertificate,
+		arg.DisplayName,
+		arg.CommonName,
+		arg.Organization,
+		arg.SubjectAlternativeNames,
+		arg.KeyLength,
+		arg.Status,
+		arg.StatusMessage,
+		arg.RequestedOn,
+		arg.CipherAlgorithmID,
+		arg.HashAlgorithmID,
+	)
+	var id int64
+	err := row.Scan(&id)
+	return id, err
+}
+
 const createCertificateAuthority = `-- name: CreateCertificateAuthority :one
 INSERT INTO certificate_authorities (
   name,
@@ -184,7 +307,7 @@ INSERT INTO certificate_contents (
   name,
   encoding,
   content,
-  certificate_request_id,
+  certificate_id,
   updated_at,
   created_at
 ) VALUES (
@@ -194,12 +317,12 @@ RETURNING id
 `
 
 type CreateCertificateContentParams struct {
-	Name                 string
-	Encoding             string
-	Content              []byte
-	CertificateRequestID int64
-	UpdatedAt            time.Time
-	CreatedAt            time.Time
+	Name          string
+	Encoding      string
+	Content       []byte
+	CertificateID int64
+	UpdatedAt     time.Time
+	CreatedAt     time.Time
 }
 
 func (q *Queries) CreateCertificateContent(ctx context.Context, arg CreateCertificateContentParams) (int64, error) {
@@ -207,7 +330,7 @@ func (q *Queries) CreateCertificateContent(ctx context.Context, arg CreateCertif
 		arg.Name,
 		arg.Encoding,
 		arg.Content,
-		arg.CertificateRequestID,
+		arg.CertificateID,
 		arg.UpdatedAt,
 		arg.CreatedAt,
 	)
@@ -216,58 +339,33 @@ func (q *Queries) CreateCertificateContent(ctx context.Context, arg CreateCertif
 	return id, err
 }
 
-const createCertificateRequest = `-- name: CreateCertificateRequest :one
-INSERT INTO certificate_requests (
-      display_name,
-      signing_algorithm,
-      key_length,
-      status,
-      status_message,
-      requested_on,
-      certificate_cryptographic_api_id,
-      signing_request_api_id,
-      cipher_algorithm_id,
-      hash_algorithm_id
+const createCertificateRequestAuthority = `-- name: CreateCertificateRequestAuthority :one
+INSERT INTO certificate_request_authority (
+  certificate_id,
+  certificate_authority_id,
+  template_name
 ) VALUES (
-  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+  ?, ?, ?
 )
-RETURNING id
+RETURNING certificate_id
 `
 
-type CreateCertificateRequestParams struct {
-	DisplayName                   sql.NullString
-	SigningAlgorithm              sql.NullString
-	KeyLength                     sql.NullInt64
-	Status                        sql.NullInt64
-	StatusMessage                 sql.NullString
-	RequestedOn                   sql.NullTime
-	CertificateCryptographicApiID sql.NullInt64
-	SigningRequestApiID           sql.NullInt64
-	CipherAlgorithmID             sql.NullInt64
-	HashAlgorithmID               sql.NullInt64
+type CreateCertificateRequestAuthorityParams struct {
+	CertificateID          int64
+	CertificateAuthorityID int64
+	TemplateName           string
 }
 
-func (q *Queries) CreateCertificateRequest(ctx context.Context, arg CreateCertificateRequestParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, createCertificateRequest,
-		arg.DisplayName,
-		arg.SigningAlgorithm,
-		arg.KeyLength,
-		arg.Status,
-		arg.StatusMessage,
-		arg.RequestedOn,
-		arg.CertificateCryptographicApiID,
-		arg.SigningRequestApiID,
-		arg.CipherAlgorithmID,
-		arg.HashAlgorithmID,
-	)
-	var id int64
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) CreateCertificateRequestAuthority(ctx context.Context, arg CreateCertificateRequestAuthorityParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createCertificateRequestAuthority, arg.CertificateID, arg.CertificateAuthorityID, arg.TemplateName)
+	var certificate_id int64
+	err := row.Scan(&certificate_id)
+	return certificate_id, err
 }
 
-const createCertificateRequestTimeline = `-- name: CreateCertificateRequestTimeline :one
-INSERT INTO certificate_requests_timeline (
-  certificate_request_id,
+const createCertificateTimeline = `-- name: CreateCertificateTimeline :one
+INSERT INTO certificate_timeline (
+  certificate_id,
   status,
   event,
   created_at,
@@ -278,17 +376,17 @@ INSERT INTO certificate_requests_timeline (
 RETURNING id
 `
 
-type CreateCertificateRequestTimelineParams struct {
-	CertificateRequestID int64
-	Status               int64
-	Event                int64
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
+type CreateCertificateTimelineParams struct {
+	CertificateID int64
+	Status        int64
+	Event         int64
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
-func (q *Queries) CreateCertificateRequestTimeline(ctx context.Context, arg CreateCertificateRequestTimelineParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, createCertificateRequestTimeline,
-		arg.CertificateRequestID,
+func (q *Queries) CreateCertificateTimeline(ctx context.Context, arg CreateCertificateTimelineParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, createCertificateTimeline,
+		arg.CertificateID,
 		arg.Status,
 		arg.Event,
 		arg.CreatedAt,
@@ -598,6 +696,16 @@ func (q *Queries) DeleteCertCryptoApi(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteCertificate = `-- name: DeleteCertificate :exec
+DELETE FROM certificates
+WHERE id = ?
+`
+
+func (q *Queries) DeleteCertificate(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteCertificate, id)
+	return err
+}
+
 const deleteCertificateAuthority = `-- name: DeleteCertificateAuthority :exec
 DELETE FROM certificate_authorities
 WHERE id = ?
@@ -608,33 +716,33 @@ func (q *Queries) DeleteCertificateAuthority(ctx context.Context, id int64) erro
 	return err
 }
 
-const deleteCertificateRequest = `-- name: DeleteCertificateRequest :exec
-DELETE FROM certificate_requests
-WHERE id = ?
+const deleteCertificateRequestAuthority = `-- name: DeleteCertificateRequestAuthority :exec
+DELETE FROM certificate_request_authority
+WHERE certificate_id = ?
 `
 
-func (q *Queries) DeleteCertificateRequest(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteCertificateRequest, id)
+func (q *Queries) DeleteCertificateRequestAuthority(ctx context.Context, certificateID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteCertificateRequestAuthority, certificateID)
 	return err
 }
 
-const deleteCertificateRequestTimeline = `-- name: DeleteCertificateRequestTimeline :exec
-DELETE FROM certificate_requests_timeline
+const deleteCertificateTimeline = `-- name: DeleteCertificateTimeline :exec
+DELETE FROM certificate_timeline
 WHERE id = ?
 `
 
-func (q *Queries) DeleteCertificateRequestTimeline(ctx context.Context, id int64) error {
-	_, err := q.db.ExecContext(ctx, deleteCertificateRequestTimeline, id)
+func (q *Queries) DeleteCertificateTimeline(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteCertificateTimeline, id)
 	return err
 }
 
-const deleteCertificateRequestTimelines = `-- name: DeleteCertificateRequestTimelines :exec
-DELETE FROM certificate_requests_timeline
-WHERE certificate_request_id = ?
+const deleteCertificateTimelines = `-- name: DeleteCertificateTimelines :exec
+DELETE FROM certificate_timeline
+WHERE certificate_id = ?
 `
 
-func (q *Queries) DeleteCertificateRequestTimelines(ctx context.Context, certificateRequestID int64) error {
-	_, err := q.db.ExecContext(ctx, deleteCertificateRequestTimelines, certificateRequestID)
+func (q *Queries) DeleteCertificateTimelines(ctx context.Context, certificateID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteCertificateTimelines, certificateID)
 	return err
 }
 
@@ -744,6 +852,59 @@ func (q *Queries) GetCertCryptoApi(ctx context.Context, id int64) (CertificateCr
 	return i, err
 }
 
+const getCertificate = `-- name: GetCertificate :one
+
+SELECT id,
+      display_name,
+      common_name,
+      organization,
+      subject_alternative_names,
+      key_length,
+      status,
+      status_message,
+      requested_on,
+      cipher_algorithm_id,
+      hash_algorithm_id
+FROM certificates
+WHERE id = ? LIMIT 1
+`
+
+type GetCertificateRow struct {
+	ID                      int64
+	DisplayName             string
+	CommonName              string
+	Organization            sql.NullString
+	SubjectAlternativeNames sql.NullString
+	KeyLength               int64
+	Status                  int64
+	StatusMessage           sql.NullString
+	RequestedOn             time.Time
+	CipherAlgorithmID       int64
+	HashAlgorithmID         int64
+}
+
+// ------------------------------------------
+// certificates
+// ------------------------------------------
+func (q *Queries) GetCertificate(ctx context.Context, id int64) (GetCertificateRow, error) {
+	row := q.db.QueryRowContext(ctx, getCertificate, id)
+	var i GetCertificateRow
+	err := row.Scan(
+		&i.ID,
+		&i.DisplayName,
+		&i.CommonName,
+		&i.Organization,
+		&i.SubjectAlternativeNames,
+		&i.KeyLength,
+		&i.Status,
+		&i.StatusMessage,
+		&i.RequestedOn,
+		&i.CipherAlgorithmID,
+		&i.HashAlgorithmID,
+	)
+	return i, err
+}
+
 const getCertificateAuthority = `-- name: GetCertificateAuthority :one
 
 SELECT ca.id AS id,
@@ -785,7 +946,7 @@ func (q *Queries) GetCertificateAuthority(ctx context.Context, id int64) (GetCer
 
 const getCertificateContent = `-- name: GetCertificateContent :one
 
-SELECT id, name, encoding, content, updated_at, created_at, certificate_request_id
+SELECT id, name, encoding, content, updated_at, created_at, certificate_id
 FROM certificate_contents
 WHERE id = ? LIMIT 1
 `
@@ -803,25 +964,25 @@ func (q *Queries) GetCertificateContent(ctx context.Context, id int64) (Certific
 		&i.Content,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.CertificateRequestID,
+		&i.CertificateID,
 	)
 	return i, err
 }
 
 const getCertificateContentByNameEncodingRequestID = `-- name: GetCertificateContentByNameEncodingRequestID :one
-SELECT id, name, encoding, content, updated_at, created_at, certificate_request_id
+SELECT id, name, encoding, content, updated_at, created_at, certificate_id
 FROM certificate_contents
-WHERE certificate_request_id = ? AND name = ? AND encoding = ? LIMIT 1
+WHERE certificate_id = ? AND name = ? AND encoding = ? LIMIT 1
 `
 
 type GetCertificateContentByNameEncodingRequestIDParams struct {
-	CertificateRequestID int64
-	Name                 string
-	Encoding             string
+	CertificateID int64
+	Name          string
+	Encoding      string
 }
 
 func (q *Queries) GetCertificateContentByNameEncodingRequestID(ctx context.Context, arg GetCertificateContentByNameEncodingRequestIDParams) (CertificateContent, error) {
-	row := q.db.QueryRowContext(ctx, getCertificateContentByNameEncodingRequestID, arg.CertificateRequestID, arg.Name, arg.Encoding)
+	row := q.db.QueryRowContext(ctx, getCertificateContentByNameEncodingRequestID, arg.CertificateID, arg.Name, arg.Encoding)
 	var i CertificateContent
 	err := row.Scan(
 		&i.ID,
@@ -830,139 +991,110 @@ func (q *Queries) GetCertificateContentByNameEncodingRequestID(ctx context.Conte
 		&i.Content,
 		&i.UpdatedAt,
 		&i.CreatedAt,
-		&i.CertificateRequestID,
+		&i.CertificateID,
 	)
 	return i, err
 }
 
-const getCertificateRequest = `-- name: GetCertificateRequest :one
-
-SELECT id,
-      display_name,
-      signing_algorithm,
-      key_length,
-      status,
-      status_message,
-      requested_on,
-      certificate_cryptographic_api_id,
-      signing_request_api_id,
-      cipher_algorithm_id,
-      hash_algorithm_id
-FROM certificate_requests
-WHERE id = ? LIMIT 1
-`
-
-type GetCertificateRequestRow struct {
-	ID                            int64
-	DisplayName                   sql.NullString
-	SigningAlgorithm              sql.NullString
-	KeyLength                     sql.NullInt64
-	Status                        sql.NullInt64
-	StatusMessage                 sql.NullString
-	RequestedOn                   sql.NullTime
-	CertificateCryptographicApiID sql.NullInt64
-	SigningRequestApiID           sql.NullInt64
-	CipherAlgorithmID             sql.NullInt64
-	HashAlgorithmID               sql.NullInt64
-}
-
-// ------------------------------------------
-// certificate_requests
-// ------------------------------------------
-func (q *Queries) GetCertificateRequest(ctx context.Context, id int64) (GetCertificateRequestRow, error) {
-	row := q.db.QueryRowContext(ctx, getCertificateRequest, id)
-	var i GetCertificateRequestRow
-	err := row.Scan(
-		&i.ID,
-		&i.DisplayName,
-		&i.SigningAlgorithm,
-		&i.KeyLength,
-		&i.Status,
-		&i.StatusMessage,
-		&i.RequestedOn,
-		&i.CertificateCryptographicApiID,
-		&i.SigningRequestApiID,
-		&i.CipherAlgorithmID,
-		&i.HashAlgorithmID,
-	)
-	return i, err
-}
-
-const getCertificateRequestDetailed = `-- name: GetCertificateRequestDetailed :one
+const getCertificateDetailed = `-- name: GetCertificateDetailed :one
 SELECT r.id AS id,
       r.display_name AS display_name,
+      r.common_name AS common_name,
+      r.organization AS organization,
+      r.subject_alternative_names AS subject_alternative_names,
       r.key_length AS key_length,
       r.requested_on AS requested_on,
       r.status AS status,
       r.status_message AS status_message,
       h.name AS hash_algorithm,
-      c.name AS cipher_algorithm,
-      s.name AS signing_request_api,
-      capi.name as certificate_cryptographic_api
-FROM certificate_requests r
+      c.name AS cipher_algorithm
+FROM certificates r
 INNER JOIN hash_algorithm h ON r.hash_algorithm_id = h.id
 INNER JOIN cipher_algorithm c ON r.cipher_algorithm_id = c.id
-INNER JOIN signing_request_api s ON r.signing_request_api_id = s.id
-INNER JOIN certificate_cryptographic_api capi ON r.certificate_cryptographic_api_id = capi.id
 WHERE r.id = ? LIMIT 1
 `
 
-type GetCertificateRequestDetailedRow struct {
-	ID                          int64
-	DisplayName                 sql.NullString
-	KeyLength                   sql.NullInt64
-	RequestedOn                 sql.NullTime
-	Status                      sql.NullInt64
-	StatusMessage               sql.NullString
-	HashAlgorithm               sql.NullString
-	CipherAlgorithm             sql.NullString
-	SigningRequestApi           sql.NullString
-	CertificateCryptographicApi sql.NullString
+type GetCertificateDetailedRow struct {
+	ID                      int64
+	DisplayName             string
+	CommonName              string
+	Organization            sql.NullString
+	SubjectAlternativeNames sql.NullString
+	KeyLength               int64
+	RequestedOn             time.Time
+	Status                  int64
+	StatusMessage           sql.NullString
+	HashAlgorithm           sql.NullString
+	CipherAlgorithm         sql.NullString
 }
 
-func (q *Queries) GetCertificateRequestDetailed(ctx context.Context, id int64) (GetCertificateRequestDetailedRow, error) {
-	row := q.db.QueryRowContext(ctx, getCertificateRequestDetailed, id)
-	var i GetCertificateRequestDetailedRow
+func (q *Queries) GetCertificateDetailed(ctx context.Context, id int64) (GetCertificateDetailedRow, error) {
+	row := q.db.QueryRowContext(ctx, getCertificateDetailed, id)
+	var i GetCertificateDetailedRow
 	err := row.Scan(
 		&i.ID,
 		&i.DisplayName,
+		&i.CommonName,
+		&i.Organization,
+		&i.SubjectAlternativeNames,
 		&i.KeyLength,
 		&i.RequestedOn,
 		&i.Status,
 		&i.StatusMessage,
 		&i.HashAlgorithm,
 		&i.CipherAlgorithm,
-		&i.SigningRequestApi,
-		&i.CertificateCryptographicApi,
 	)
 	return i, err
 }
 
-const getCertificateRequestTimeline = `-- name: GetCertificateRequestTimeline :one
+const getCertificateRequestAuthority = `-- name: GetCertificateRequestAuthority :one
 
-SELECT id, certificate_request_id, status, event, created_at, updated_at
-FROM certificate_requests_timeline
+SELECT certificate_id, certificate_authority_id, template_name
+FROM certificate_request_authority
+WHERE certificate_id = ? LIMIT 1
+`
+
+type GetCertificateRequestAuthorityRow struct {
+	CertificateID          int64
+	CertificateAuthorityID int64
+	TemplateName           string
+}
+
+// ------------------------------------------
+// certificate_request_authority
+// ------------------------------------------
+func (q *Queries) GetCertificateRequestAuthority(ctx context.Context, certificateID int64) (GetCertificateRequestAuthorityRow, error) {
+	row := q.db.QueryRowContext(ctx, getCertificateRequestAuthority, certificateID)
+	var i GetCertificateRequestAuthorityRow
+	err := row.Scan(&i.CertificateID, &i.CertificateAuthorityID, &i.TemplateName)
+	return i, err
+}
+
+const getCertificateTimeline = `-- name: GetCertificateTimeline :one
+
+SELECT id, certificate_id, status, event, created_at, updated_at
+FROM certificate_timeline
 WHERE id = ? LIMIT 1
 `
 
-type GetCertificateRequestTimelineRow struct {
-	ID                   int64
-	CertificateRequestID int64
-	Status               int64
-	Event                int64
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
+type GetCertificateTimelineRow struct {
+	ID            int64
+	CertificateID int64
+	Status        int64
+	Event         int64
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 // ------------------------------------------
-// certificate_requests_timeline
+// certificate_timeline
 // ------------------------------------------
-func (q *Queries) GetCertificateRequestTimeline(ctx context.Context, id int64) (GetCertificateRequestTimelineRow, error) {
-	row := q.db.QueryRowContext(ctx, getCertificateRequestTimeline, id)
-	var i GetCertificateRequestTimelineRow
+func (q *Queries) GetCertificateTimeline(ctx context.Context, id int64) (GetCertificateTimelineRow, error) {
+	row := q.db.QueryRowContext(ctx, getCertificateTimeline, id)
+	var i GetCertificateTimelineRow
 	err := row.Scan(
 		&i.ID,
-		&i.CertificateRequestID,
+		&i.CertificateID,
 		&i.Status,
 		&i.Event,
 		&i.CreatedAt,
@@ -971,38 +1103,50 @@ func (q *Queries) GetCertificateRequestTimeline(ctx context.Context, id int64) (
 	return i, err
 }
 
-const getCertificateRequestTimelineByRequest = `-- name: GetCertificateRequestTimelineByRequest :one
-SELECT id, certificate_request_id, status, event, created_at, updated_at
-FROM certificate_requests_timeline
-WHERE certificate_request_id = ? AND event = ? LIMIT 1
+const getCertificateTimelineByRequest = `-- name: GetCertificateTimelineByRequest :one
+SELECT id, certificate_id, status, event, created_at, updated_at
+FROM certificate_timeline
+WHERE certificate_id = ? AND event = ? LIMIT 1
 `
 
-type GetCertificateRequestTimelineByRequestParams struct {
-	CertificateRequestID int64
-	Event                int64
+type GetCertificateTimelineByRequestParams struct {
+	CertificateID int64
+	Event         int64
 }
 
-type GetCertificateRequestTimelineByRequestRow struct {
-	ID                   int64
-	CertificateRequestID int64
-	Status               int64
-	Event                int64
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
+type GetCertificateTimelineByRequestRow struct {
+	ID            int64
+	CertificateID int64
+	Status        int64
+	Event         int64
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
-func (q *Queries) GetCertificateRequestTimelineByRequest(ctx context.Context, arg GetCertificateRequestTimelineByRequestParams) (GetCertificateRequestTimelineByRequestRow, error) {
-	row := q.db.QueryRowContext(ctx, getCertificateRequestTimelineByRequest, arg.CertificateRequestID, arg.Event)
-	var i GetCertificateRequestTimelineByRequestRow
+func (q *Queries) GetCertificateTimelineByRequest(ctx context.Context, arg GetCertificateTimelineByRequestParams) (GetCertificateTimelineByRequestRow, error) {
+	row := q.db.QueryRowContext(ctx, getCertificateTimelineByRequest, arg.CertificateID, arg.Event)
+	var i GetCertificateTimelineByRequestRow
 	err := row.Scan(
 		&i.ID,
-		&i.CertificateRequestID,
+		&i.CertificateID,
 		&i.Status,
 		&i.Event,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getCertificatesCount = `-- name: GetCertificatesCount :one
+SELECT COUNT(*) as count
+FROM certificates
+`
+
+func (q *Queries) GetCertificatesCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getCertificatesCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getCipherAlgorithm = `-- name: GetCipherAlgorithm :one
@@ -1306,6 +1450,71 @@ func (q *Queries) ListCertCryptoApi(ctx context.Context) ([]CertificateCryptogra
 	return items, nil
 }
 
+const listCertificate = `-- name: ListCertificate :many
+SELECT id,
+      display_name,
+      common_name,
+      organization,
+      subject_alternative_names,
+      key_length,
+      status,
+      status_message,
+      requested_on,
+      cipher_algorithm_id,
+      hash_algorithm_id
+FROM certificates
+ORDER BY id
+`
+
+type ListCertificateRow struct {
+	ID                      int64
+	DisplayName             string
+	CommonName              string
+	Organization            sql.NullString
+	SubjectAlternativeNames sql.NullString
+	KeyLength               int64
+	Status                  int64
+	StatusMessage           sql.NullString
+	RequestedOn             time.Time
+	CipherAlgorithmID       int64
+	HashAlgorithmID         int64
+}
+
+func (q *Queries) ListCertificate(ctx context.Context) ([]ListCertificateRow, error) {
+	rows, err := q.db.QueryContext(ctx, listCertificate)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListCertificateRow
+	for rows.Next() {
+		var i ListCertificateRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.DisplayName,
+			&i.CommonName,
+			&i.Organization,
+			&i.SubjectAlternativeNames,
+			&i.KeyLength,
+			&i.Status,
+			&i.StatusMessage,
+			&i.RequestedOn,
+			&i.CipherAlgorithmID,
+			&i.HashAlgorithmID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listCertificateAuthorities = `-- name: ListCertificateAuthorities :many
 SELECT ca.id AS id,
       ca.name,
@@ -1357,13 +1566,13 @@ func (q *Queries) ListCertificateAuthorities(ctx context.Context) ([]ListCertifi
 }
 
 const listCertificateContent = `-- name: ListCertificateContent :many
-SELECT id, name, encoding, content, updated_at, created_at, certificate_request_id
+SELECT id, name, encoding, content, updated_at, created_at, certificate_id
 FROM certificate_contents
-WHERE certificate_request_id = ?
+WHERE certificate_id = ?
 `
 
-func (q *Queries) ListCertificateContent(ctx context.Context, certificateRequestID int64) ([]CertificateContent, error) {
-	rows, err := q.db.QueryContext(ctx, listCertificateContent, certificateRequestID)
+func (q *Queries) ListCertificateContent(ctx context.Context, certificateID int64) ([]CertificateContent, error) {
+	rows, err := q.db.QueryContext(ctx, listCertificateContent, certificateID)
 	if err != nil {
 		return nil, err
 	}
@@ -1378,7 +1587,7 @@ func (q *Queries) ListCertificateContent(ctx context.Context, certificateRequest
 			&i.Content,
 			&i.UpdatedAt,
 			&i.CreatedAt,
-			&i.CertificateRequestID,
+			&i.CertificateID,
 		); err != nil {
 			return nil, err
 		}
@@ -1393,58 +1602,28 @@ func (q *Queries) ListCertificateContent(ctx context.Context, certificateRequest
 	return items, nil
 }
 
-const listCertificateRequest = `-- name: ListCertificateRequest :many
-SELECT id,
-      display_name,
-      signing_algorithm,
-      key_length,
-      status,
-      status_message,
-      requested_on,
-      certificate_cryptographic_api_id,
-      signing_request_api_id,
-      cipher_algorithm_id,
-      hash_algorithm_id
-FROM certificate_requests
-ORDER BY id
+const listCertificateRequestAuthority = `-- name: ListCertificateRequestAuthority :many
+SELECT certificate_id, certificate_authority_id, template_name
+FROM certificate_request_authority
+WHERE certificate_id = ?
 `
 
-type ListCertificateRequestRow struct {
-	ID                            int64
-	DisplayName                   sql.NullString
-	SigningAlgorithm              sql.NullString
-	KeyLength                     sql.NullInt64
-	Status                        sql.NullInt64
-	StatusMessage                 sql.NullString
-	RequestedOn                   sql.NullTime
-	CertificateCryptographicApiID sql.NullInt64
-	SigningRequestApiID           sql.NullInt64
-	CipherAlgorithmID             sql.NullInt64
-	HashAlgorithmID               sql.NullInt64
+type ListCertificateRequestAuthorityRow struct {
+	CertificateID          int64
+	CertificateAuthorityID int64
+	TemplateName           string
 }
 
-func (q *Queries) ListCertificateRequest(ctx context.Context) ([]ListCertificateRequestRow, error) {
-	rows, err := q.db.QueryContext(ctx, listCertificateRequest)
+func (q *Queries) ListCertificateRequestAuthority(ctx context.Context, certificateID int64) ([]ListCertificateRequestAuthorityRow, error) {
+	rows, err := q.db.QueryContext(ctx, listCertificateRequestAuthority, certificateID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListCertificateRequestRow
+	var items []ListCertificateRequestAuthorityRow
 	for rows.Next() {
-		var i ListCertificateRequestRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.DisplayName,
-			&i.SigningAlgorithm,
-			&i.KeyLength,
-			&i.Status,
-			&i.StatusMessage,
-			&i.RequestedOn,
-			&i.CertificateCryptographicApiID,
-			&i.SigningRequestApiID,
-			&i.CipherAlgorithmID,
-			&i.HashAlgorithmID,
-		); err != nil {
+		var i ListCertificateRequestAuthorityRow
+		if err := rows.Scan(&i.CertificateID, &i.CertificateAuthorityID, &i.TemplateName); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1458,34 +1637,34 @@ func (q *Queries) ListCertificateRequest(ctx context.Context) ([]ListCertificate
 	return items, nil
 }
 
-const listCertificateRequestTimeline = `-- name: ListCertificateRequestTimeline :many
-SELECT id, certificate_request_id, status, event, created_at, updated_at
-FROM certificate_requests_timeline
-WHERE certificate_request_id = ?
+const listCertificateTimeline = `-- name: ListCertificateTimeline :many
+SELECT id, certificate_id, status, event, created_at, updated_at
+FROM certificate_timeline
+WHERE certificate_id = ?
 ORDER BY id
 `
 
-type ListCertificateRequestTimelineRow struct {
-	ID                   int64
-	CertificateRequestID int64
-	Status               int64
-	Event                int64
-	CreatedAt            time.Time
-	UpdatedAt            time.Time
+type ListCertificateTimelineRow struct {
+	ID            int64
+	CertificateID int64
+	Status        int64
+	Event         int64
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
-func (q *Queries) ListCertificateRequestTimeline(ctx context.Context, certificateRequestID int64) ([]ListCertificateRequestTimelineRow, error) {
-	rows, err := q.db.QueryContext(ctx, listCertificateRequestTimeline, certificateRequestID)
+func (q *Queries) ListCertificateTimeline(ctx context.Context, certificateID int64) ([]ListCertificateTimelineRow, error) {
+	rows, err := q.db.QueryContext(ctx, listCertificateTimeline, certificateID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ListCertificateRequestTimelineRow
+	var items []ListCertificateTimelineRow
 	for rows.Next() {
-		var i ListCertificateRequestTimelineRow
+		var i ListCertificateTimelineRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.CertificateRequestID,
+			&i.CertificateID,
 			&i.Status,
 			&i.Event,
 			&i.CreatedAt,
@@ -1918,38 +2097,38 @@ func (q *Queries) UpdateCertificateAuthority(ctx context.Context, arg UpdateCert
 	return err
 }
 
-const updateCertificateRequestStatus = `-- name: UpdateCertificateRequestStatus :exec
-UPDATE certificate_requests
+const updateCertificateStatus = `-- name: UpdateCertificateStatus :exec
+UPDATE certificates
 set status = ?, status_message = ?
 WHERE id = ?
 `
 
-type UpdateCertificateRequestStatusParams struct {
-	Status        sql.NullInt64
+type UpdateCertificateStatusParams struct {
+	Status        int64
 	StatusMessage sql.NullString
 	ID            int64
 }
 
-func (q *Queries) UpdateCertificateRequestStatus(ctx context.Context, arg UpdateCertificateRequestStatusParams) error {
-	_, err := q.db.ExecContext(ctx, updateCertificateRequestStatus, arg.Status, arg.StatusMessage, arg.ID)
+func (q *Queries) UpdateCertificateStatus(ctx context.Context, arg UpdateCertificateStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateCertificateStatus, arg.Status, arg.StatusMessage, arg.ID)
 	return err
 }
 
-const updateCertificateRequestTimeline = `-- name: UpdateCertificateRequestTimeline :exec
-UPDATE certificate_requests_timeline
+const updateCertificateTimeline = `-- name: UpdateCertificateTimeline :exec
+UPDATE certificate_timeline
 SET status = ?, event = ?, updated_at = ?
 WHERE id = ?
 `
 
-type UpdateCertificateRequestTimelineParams struct {
+type UpdateCertificateTimelineParams struct {
 	Status    int64
 	Event     int64
 	UpdatedAt time.Time
 	ID        int64
 }
 
-func (q *Queries) UpdateCertificateRequestTimeline(ctx context.Context, arg UpdateCertificateRequestTimelineParams) error {
-	_, err := q.db.ExecContext(ctx, updateCertificateRequestTimeline,
+func (q *Queries) UpdateCertificateTimeline(ctx context.Context, arg UpdateCertificateTimelineParams) error {
+	_, err := q.db.ExecContext(ctx, updateCertificateTimeline,
 		arg.Status,
 		arg.Event,
 		arg.UpdatedAt,
@@ -1958,24 +2137,24 @@ func (q *Queries) UpdateCertificateRequestTimeline(ctx context.Context, arg Upda
 	return err
 }
 
-const updateCertificateRequestTimelineByRequest = `-- name: UpdateCertificateRequestTimelineByRequest :exec
-UPDATE certificate_requests_timeline
+const updateCertificateTimelineByRequest = `-- name: UpdateCertificateTimelineByRequest :exec
+UPDATE certificate_timeline
 SET status = ?, updated_at = ?
-WHERE certificate_request_id = ? AND event = ?
+WHERE certificate_id = ? AND event = ?
 `
 
-type UpdateCertificateRequestTimelineByRequestParams struct {
-	Status               int64
-	UpdatedAt            time.Time
-	CertificateRequestID int64
-	Event                int64
+type UpdateCertificateTimelineByRequestParams struct {
+	Status        int64
+	UpdatedAt     time.Time
+	CertificateID int64
+	Event         int64
 }
 
-func (q *Queries) UpdateCertificateRequestTimelineByRequest(ctx context.Context, arg UpdateCertificateRequestTimelineByRequestParams) error {
-	_, err := q.db.ExecContext(ctx, updateCertificateRequestTimelineByRequest,
+func (q *Queries) UpdateCertificateTimelineByRequest(ctx context.Context, arg UpdateCertificateTimelineByRequestParams) error {
+	_, err := q.db.ExecContext(ctx, updateCertificateTimelineByRequest,
 		arg.Status,
 		arg.UpdatedAt,
-		arg.CertificateRequestID,
+		arg.CertificateID,
 		arg.Event,
 	)
 	return err

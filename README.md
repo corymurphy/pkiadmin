@@ -22,21 +22,28 @@ docker run --rm -v $(pwd):/src -w /src sqlc/sqlc generate
 
 ## TODO
 
-* [] implement auditing
-* [] implement auth
-    - [] saml
-    - [] oidc
-    - [] local
-* [] install certificates on iis
-    - [] build powershell remote execution system
+* [ ] implement auditing
+* [ ] implement auth
+    - [ ] saml
+    - [ ] oidc
+    - [ ] local
+* [ ] install certificates on iis
+    - [ ] build powershell remote execution system
 * [x] show templates under certificate authorities
-* [] separate certs/requests?
-* [] fix the status badge to be less of a mess of css
-* [] support group managed service accounts
-* [] support kerberos for ca auth
-* [] implement search
+* [ ] separate certs/requests?
+* [ ] fix the status badge to be less of a mess of css
+* [ ] support group managed service accounts
+* [ ] support kerberos for ca auth
+* [ ] implement search
 * [x] build job scheduling system
 * [x] issue certs using adcs from linux
-* [] create installation docs
-* [] create ci
-* [] encrypt secrets
+* [ ] create installation docs
+* [ ] create ci
+* [ ] encrypt secrets
+* [ ] refactor template rendering
+* [x] paginaton for requests
+* [ ] paginaton for scheduler
+* [ ] generate pfx
+* [ ] generate encrypted private key
+* [ ] fix ca template slow warmup
+* [ ] add simple logging to replace fmt.println usage

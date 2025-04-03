@@ -65,23 +65,23 @@ func (i *CreateRsaCsrJob) Run(log *log.Logger, args CreateRsaCsrArguments) (next
 	now := time.Now()
 
 	if _, err = queries.CreateCertificateContent(ctx, repo.CreateCertificateContentParams{
-		CertificateRequestID: args.ID,
-		Content:              csr,
-		UpdatedAt:            now,
-		CreatedAt:            now,
-		Name:                 "csr",
-		Encoding:             "der",
+		CertificateID: args.ID,
+		Content:       csr,
+		UpdatedAt:     now,
+		CreatedAt:     now,
+		Name:          "csr",
+		Encoding:      "der",
 	}); err != nil {
 		return nil, fmt.Errorf("failed to create certificate content csr: %w", err)
 	}
 
 	if _, err = queries.CreateCertificateContent(ctx, repo.CreateCertificateContentParams{
-		CertificateRequestID: args.ID,
-		Content:              privateKeyPem,
-		UpdatedAt:            now,
-		CreatedAt:            now,
-		Name:                 "privatekey",
-		Encoding:             "pem",
+		CertificateID: args.ID,
+		Content:       privateKeyPem,
+		UpdatedAt:     now,
+		CreatedAt:     now,
+		Name:          "privatekey",
+		Encoding:      "pem",
 	}); err != nil {
 		return nil, fmt.Errorf("failed to create certificate content csr: %w", err)
 	}
@@ -90,12 +90,12 @@ func (i *CreateRsaCsrJob) Run(log *log.Logger, args CreateRsaCsrArguments) (next
 		return nil, fmt.Errorf("failed to update certificate request content id: %w", err)
 	}
 
-	queries.UpdateCertificateRequestTimelineByRequest(ctx,
-		repo.UpdateCertificateRequestTimelineByRequestParams{
-			CertificateRequestID: args.ID,
-			Event:                int64(Generated),
-			Status:               int64(Completed),
-			UpdatedAt:            time.Now(),
+	queries.UpdateCertificateTimelineByRequest(ctx,
+		repo.UpdateCertificateTimelineByRequestParams{
+			CertificateID: args.ID,
+			Event:         int64(Generated),
+			Status:        int64(Completed),
+			UpdatedAt:     time.Now(),
 		})
 
 	return &scheduling.Job{

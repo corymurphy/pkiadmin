@@ -32,9 +32,9 @@ func (i *IssueADCSCertificate) Run(log *log.Logger, args IssueADCSCertificateArg
 
 	content, err := queries.GetCertificateContentByNameEncodingRequestID(
 		ctx, repo.GetCertificateContentByNameEncodingRequestIDParams{
-			Name:                 "csr",
-			Encoding:             "der",
-			CertificateRequestID: args.ID,
+			Name:          "csr",
+			Encoding:      "der",
+			CertificateID: args.ID,
 		})
 
 	log.Println("csr id", args.ID)
@@ -66,12 +66,12 @@ func (i *IssueADCSCertificate) Run(log *log.Logger, args IssueADCSCertificateArg
 		Attributes: "CertificateTemplate:ServerAuthentication-CngRsa",
 	})
 	if err != nil {
-		queries.UpdateCertificateRequestTimelineByRequest(ctx,
-			repo.UpdateCertificateRequestTimelineByRequestParams{
-				CertificateRequestID: args.ID,
-				Event:                int64(Submitted),
-				Status:               int64(Failed),
-				UpdatedAt:            time.Now(),
+		queries.UpdateCertificateTimelineByRequest(ctx,
+			repo.UpdateCertificateTimelineByRequestParams{
+				CertificateID: args.ID,
+				Event:         int64(Submitted),
+				Status:        int64(Failed),
+				UpdatedAt:     time.Now(),
 			})
 		return nil, fmt.Errorf("error requesting certificate: %w", err)
 	}
@@ -80,54 +80,72 @@ func (i *IssueADCSCertificate) Run(log *log.Logger, args IssueADCSCertificateArg
 	log.Println("response.Disposition", response.Disposition)
 	log.Println("response.DispositionMessage", response.DispositionMessage)
 
-	queries.UpdateCertificateRequestTimelineByRequest(ctx,
-		repo.UpdateCertificateRequestTimelineByRequestParams{
-			CertificateRequestID: args.ID,
-			Event:                int64(Submitted),
-			Status:               int64(Completed),
-			UpdatedAt:            time.Now(),
+	queries.UpdateCertificateTimelineByRequest(ctx,
+		repo.UpdateCertificateTimelineByRequestParams{
+			CertificateID: args.ID,
+			Event:         int64(Submitted),
+			Status:        int64(Completed),
+			UpdatedAt:     time.Now(),
 		})
 
 	if response.Disposition != adcs.Issued {
-		queries.UpdateCertificateRequestTimelineByRequest(ctx,
-			repo.UpdateCertificateRequestTimelineByRequestParams{
-				CertificateRequestID: args.ID,
-				Event:                int64(Issued),
-				Status:               int64(Failed),
-				UpdatedAt:            time.Now(),
+		queries.UpdateCertificateTimelineByRequest(ctx,
+			repo.UpdateCertificateTimelineByRequestParams{
+				CertificateID: args.ID,
+				Event:         int64(Issued),
+				Status:        int64(Failed),
+				UpdatedAt:     time.Now(),
+			})
+		queries.UpdateCertificateStatus(ctx,
+			repo.UpdateCertificateStatusParams{
+				ID:            args.ID,
+				Status:        repo.Rejected,
+				StatusMessage: sql.NullString{String: "Rejected", Valid: true},
 			})
 		return nil, fmt.Errorf("error requesting certificate: %d %s",
 			response.Disposition, response.DispositionMessage)
 	}
 
 	if _, err = queries.CreateCertificateContent(ctx, repo.CreateCertificateContentParams{
-		CertificateRequestID: args.ID,
-		Content:              response.Certificate,
-		UpdatedAt:            time.Now(),
-		CreatedAt:            time.Now(),
-		Name:                 "certificate",
-		Encoding:             "pem",
+		CertificateID: args.ID,
+		Content:       response.Certificate,
+		UpdatedAt:     time.Now(),
+		CreatedAt:     time.Now(),
+		Name:          "certificate",
+		Encoding:      "pem",
 	}); err != nil {
 		return nil, fmt.Errorf("failed to create certificate content csr: %w", err)
 	}
 
 	if err != nil {
-		queries.UpdateCertificateRequestTimelineByRequest(ctx,
-			repo.UpdateCertificateRequestTimelineByRequestParams{
-				CertificateRequestID: args.ID,
-				Event:                int64(Issued),
-				Status:               int64(Failed),
-				UpdatedAt:            time.Now(),
+		queries.UpdateCertificateTimelineByRequest(ctx,
+			repo.UpdateCertificateTimelineByRequestParams{
+				CertificateID: args.ID,
+				Event:         int64(Issued),
+				Status:        int64(Failed),
+				UpdatedAt:     time.Now(),
+			})
+		queries.UpdateCertificateStatus(ctx,
+			repo.UpdateCertificateStatusParams{
+				ID:            args.ID,
+				Status:        repo.Failed,
+				StatusMessage: sql.NullString{String: "Failed", Valid: true},
 			})
 		return nil, fmt.Errorf("error updating certificate content: %w", err)
 	}
 
-	queries.UpdateCertificateRequestTimelineByRequest(ctx,
-		repo.UpdateCertificateRequestTimelineByRequestParams{
-			CertificateRequestID: args.ID,
-			Event:                int64(Issued),
-			Status:               int64(Completed),
-			UpdatedAt:            time.Now(),
+	queries.UpdateCertificateTimelineByRequest(ctx,
+		repo.UpdateCertificateTimelineByRequestParams{
+			CertificateID: args.ID,
+			Event:         int64(Issued),
+			Status:        int64(Completed),
+			UpdatedAt:     time.Now(),
+		})
+	queries.UpdateCertificateStatus(ctx,
+		repo.UpdateCertificateStatusParams{
+			ID:            args.ID,
+			Status:        repo.Issued,
+			StatusMessage: sql.NullString{String: "Issued", Valid: true},
 		})
 
 	return nil, nil

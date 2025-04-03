@@ -11,6 +11,20 @@ import (
 	"github.com/google/uuid"
 )
 
+type Certificate struct {
+	ID                      int64
+	DisplayName             string
+	CommonName              string
+	Organization            sql.NullString
+	SubjectAlternativeNames sql.NullString
+	KeyLength               int64
+	RequestedOn             time.Time
+	Status                  int64
+	StatusMessage           sql.NullString
+	CipherAlgorithmID       int64
+	HashAlgorithmID         int64
+}
+
 type CertificateAuthority struct {
 	ID           int64
 	Name         string
@@ -19,13 +33,13 @@ type CertificateAuthority struct {
 }
 
 type CertificateContent struct {
-	ID                   int64
-	Name                 string
-	Encoding             string
-	Content              []byte
-	UpdatedAt            time.Time
-	CreatedAt            time.Time
-	CertificateRequestID int64
+	ID            int64
+	Name          string
+	Encoding      string
+	Content       []byte
+	UpdatedAt     time.Time
+	CreatedAt     time.Time
+	CertificateID int64
 }
 
 type CertificateCryptographicApi struct {
@@ -34,27 +48,20 @@ type CertificateCryptographicApi struct {
 	Shortname sql.NullString
 }
 
-type CertificateRequest struct {
-	ID                            int64
-	DisplayName                   sql.NullString
-	SigningAlgorithm              sql.NullString
-	KeyLength                     sql.NullInt64
-	RequestedOn                   sql.NullTime
-	Status                        sql.NullInt64
-	StatusMessage                 sql.NullString
-	CertificateCryptographicApiID sql.NullInt64
-	SigningRequestApiID           sql.NullInt64
-	CipherAlgorithmID             sql.NullInt64
-	HashAlgorithmID               sql.NullInt64
+type CertificateRequestAuthority struct {
+	ID                     int64
+	CertificateID          int64
+	CertificateAuthorityID int64
+	TemplateName           string
 }
 
-type CertificateRequestsTimeline struct {
-	ID                   int64
-	CertificateRequestID int64
-	Event                int64
-	Status               int64
-	UpdatedAt            time.Time
-	CreatedAt            time.Time
+type CertificateTimeline struct {
+	ID            int64
+	CertificateID int64
+	Event         int64
+	Status        int64
+	UpdatedAt     time.Time
+	CreatedAt     time.Time
 }
 
 type CipherAlgorithm struct {
