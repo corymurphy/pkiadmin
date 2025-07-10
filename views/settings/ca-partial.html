@@ -70,3 +70,24 @@
 <option value="{{ $item.Name }}">{{ $item.Name }}</option>
 {{ end }}
 {{ end }}
+
+{{ block "ca-templates-list" . }}
+<ul class="" style="list-style-type: none;"></ul>
+  {{ range $item := .Templates }}
+  <li style="list-style-type: none;" value="{{ $item.Name }}">{{ $item.Name }}</li>
+  {{ end }}
+</ul>
+{{ end }}
+
+{{ block "ca-templates-table" . }}
+<table>
+<tbody>
+  {{ range $item := .Templates }}
+  <tr>
+    <td style="padding-right: 10px;">{{ $item.Name }}</td>
+    <td>{{ $item.ID }}</td>
+  </tr>
+  {{ end}}
+</tbody>
+</table>
+{{ end }}

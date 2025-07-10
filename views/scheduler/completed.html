@@ -16,53 +16,73 @@
       </thead>
       <tbody>
         {{range $item := .Completed }}
-          <tr class="view"  id="job-{{ .ID }}">
-            <td>
-              <div class="action toggle">
-                <button class="collapsible" onclick='toggleFold(this, "job-{{ .ID }}")'>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus"
-                    viewBox="0 0 16 16"s>
-                    <path
-                      d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
-                  </svg>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-dash" viewBox="0 0 16 16">
-                    <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8"/>
-                  </svg>
-                </button>
-              </div>
-            </td>
-            <th scope="row">{{ .ID }}</th>
-            <td>{{ .Processor }}</td>
-            <td>{{ .Retry }}</td>
-            <td>{{ .RetryCount }}</td>
-            <td>{{ .CreatedAt.Format "2006-01-02 15:04" }}</td>
-            <td>
-              <div class="action">
-                <button class="text-danger" hx-target="#job-{{ .ID }}" hx-delete="/scheduler/completed/{{ .ID }}">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                    class="bi bi-trash-fill" viewBox="0 0 16 16">
-                    <path
-                      d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
-                  </svg>
-                </button>
-              </div>
-            </td>
-          </tr>
-          <tr class="fold">
-            <td colspan="7">
-              <div class="fold-content">
-                <code>
+        <tr class="view" id="job-{{ .ID }}">
+          <td>
+            <div class="action toggle">
+              <button class="collapsible" onclick='toggleFold(this, "job-{{ .ID }}")'>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus"
+                  viewBox="0 0 16 16" s>
+                  <path
+                    d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4" />
+                </svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-dash"
+                  viewBox="0 0 16 16">
+                  <path d="M4 8a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7A.5.5 0 0 1 4 8" />
+                </svg>
+              </button>
+            </div>
+          </td>
+          <th scope="row">{{ .ID }}</th>
+          <td>{{ .Processor }}</td>
+          <td>{{ .Retry }}</td>
+          <td>{{ .RetryCount }}</td>
+          <td>{{ .CreatedAt.Format "2006-01-02 15:04" }}</td>
+          <td>
+            <div class="action">
+              <button class="text-danger" hx-target="#job-{{ .ID }}" hx-delete="/scheduler/completed/{{ .ID }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                  class="bi bi-trash-fill" viewBox="0 0 16 16">
+                  <path
+                    d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5M8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5m3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr class="fold">
+          <td colspan="7">
+            <div class="fold-content">
+              <code>
                   {{ range $line := splitNewLine .Log }}
                     {{ $line }}<br>
                   {{ end }}
                 </code>
-              </div>
-            </td>
-          </tr>
+            </div>
+          </td>
+        </tr>
         {{ end }}
       </tbody>
     </table>
-  </div>
+    <div class="row">
+      <div class="col-sm-12 col-md-5">
+        showing jobs {{ .Paginator.Start }} to {{ .Paginator.End }} of {{ .Paginator.Total }}
+      </div>
+      <div class="col-sm-12 col-md-7">
+        <nav aria-label="Page navigation example">
+          <ul class="pagination justify-content-end">
+            {{ range $i, $x := .Paginator.Pages }}
+            <li class="page-item {{ if $x.Active }}active{{ end }}">
+              {{ if $x.Disabled }}
+              <span class="page-link" aria-disabled="true">{{ $x.Value }}</span>
+              {{ else }}
+              <a class="page-link" href="{{ $x.Href }}">{{ $x.Value }}</a>
+              {{ end }}
+            </li>
+            {{ end }}
+          </ul>
+        </nav>
+      </div>
+    </div>
 </section>
 
 {{ end }}

@@ -553,7 +553,7 @@ INSERT INTO scheduler_completed (
 )
 RETURNING id;
 
--- name: ListCompletedJobs :many
+-- name: ListCompletedJobsPaginated :many
 SELECT id,
   retry,
   retry_count,
@@ -562,7 +562,9 @@ SELECT id,
   processor,
   arguments,
   log
-FROM scheduler_completed;
+FROM scheduler_completed
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
 
 -- name: DeleteCompletedJob :exec
 DELETE FROM scheduler_completed

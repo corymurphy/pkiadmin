@@ -31,7 +31,8 @@ docker run --rm -v $(pwd):/src -w /src sqlc/sqlc generate
     - [ ] build powershell remote execution system
 * [x] show templates under certificate authorities
 * [ ] separate certs/requests?
-* [ ] fix the status badge to be less of a mess of css
+* [x] fix the status badge to be less of a mess of css
+* [ ] create a better partial template system
 * [ ] support group managed service accounts
 * [ ] support kerberos for ca auth
 * [ ] implement search
@@ -45,5 +46,6 @@ docker run --rm -v $(pwd):/src -w /src sqlc/sqlc generate
 * [ ] paginaton for scheduler
 * [ ] generate pfx
 * [ ] generate encrypted private key
-* [ ] fix ca template slow warmup
+* [x] fix ca template slow warmup
 * [ ] add simple logging to replace fmt.println usage
+* [ ] add database indexes

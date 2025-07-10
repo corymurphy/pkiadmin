@@ -76,33 +76,45 @@
         {{ end }}
       </tbody>
     </table>
+
     <div class="row">
       <div class="col-sm-12 col-md-5">
-        showing certificates {{ .Start }} to {{ .End }} of {{ .CertificateCount }}
+        showing certificates {{ .Paginator.Start }} to {{ .Paginator.End }} of {{ .Paginator.Total }}
       </div>
       <div class="col-sm-12 col-md-7">
         <nav aria-label="Page navigation example">
           <ul class="pagination justify-content-end">
-            <!-- <li class="page-item disabled">
-              <a class="page-link">Previous</a>
-            </li> -->
-            {{ range $i, $x := .Pages }}
+            {{ range $i, $x := .Paginator.Pages }}
+            <li class="page-item {{ if $x.Active }}active{{ end }}">
+              {{ if $x.Disabled }}
+              <span class="page-link" aria-disabled="true">{{ $x.Value }}</span>
+              {{ else }}
+              <a class="page-link" href="{{ $x.Href }}">{{ $x.Value }}</a>
+              {{ end }}
+            </li>
+            {{ end }}
+          </ul>
+        </nav>
+      </div>
+    </div>
+    <!-- <div class="row">
+      <div class="col-sm-12 col-md-5">
+        showing certificates {{ .Paginator.Start }} to {{ .Paginator.End }} of {{ .Paginator.Total }}
+      </div>
+      <div class="col-sm-12 col-md-7">
+        <nav aria-label="Page navigation example">
+          <ul class="pagination justify-content-end">
+            {{ range $i, $x := .Paginator.Pages }}
             {{ if eq $i $.Page }}
             <li class="page-item active"><a class="page-link" href="#">{{ $i }}</a></li>
             {{ else }}
             <li class="page-item"><a class="page-link" href="?page={{ $i }}">{{ $i }}</a></li>
             {{ end }}
             {{ end }}
-            <!-- <li class="page-item"><a class="page-link" href="#">1</a></li>
-            <li class="page-item"><a class="page-link" href="#">2</a></li>
-            <li class="page-item"><a class="page-link" href="#">3</a></li> -->
-            <!-- <li class="page-item">
-              <a class="page-link" href="#">Next</a>
-            </li> -->
           </ul>
         </nav>
       </div>
-    </div>
+    </div> -->
   </div>
 </section>
 {{ end }}

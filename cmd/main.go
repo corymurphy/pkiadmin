@@ -20,7 +20,7 @@ import (
 	"github.com/corymurphy/pkiadmin/pkg/certificates"
 	"github.com/corymurphy/pkiadmin/pkg/repo"
 	"github.com/corymurphy/pkiadmin/pkg/scheduling"
-	"github.com/corymurphy/pkiadmin/pkg/shared"
+	"github.com/corymurphy/pkiadmin/pkg/ui"
 	"github.com/corymurphy/pkiadmin/views"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -143,6 +143,31 @@ func main() {
 			// TODO use generics
 			"ByteLength": func(data []byte) int {
 				return len(data)
+			},
+			"add": func(a, b int64) int64 {
+				return a + b
+			},
+			"sub": func(a, b int64) int64 {
+				return a - b
+			},
+			"max": func(a, b int64) int64 {
+				if a > b {
+					return a
+				}
+				return b
+			},
+			"min": func(a, b int64) int64 {
+				if a < b {
+					return a
+				}
+				return b
+			},
+			"seq": func(start, end int64) []int64 {
+				var result []int64
+				for i := start; i <= end; i++ {
+					result = append(result, i)
+				}
+				return result
 			},
 		})
 
@@ -280,18 +305,15 @@ func main() {
 
 	e.GET("requests/list.html", func(c echo.Context) error {
 		ctx := context.Background()
-		// requests, err := queries.ListCertificate(ctx)
-		// requests, err := queries.CertificatesAndHashAlgorithm(ctx)
 
 		page, err := strconv.ParseInt(c.QueryParam("page"), 10, 64)
-		if err != nil {
-			page = 0
+		if err != nil || page < 1 {
+			page = 1
 		}
 		limit, err := strconv.ParseInt(c.QueryParam("limit"), 10, 64)
-		if err != nil {
+		if err != nil || limit < 4 || limit > 100 {
 			limit = 10
 		}
-		fmt.Println(page, limit)
 
 		count, err := queries.GetCertificatesCount(ctx)
 		if err != nil {
@@ -300,7 +322,7 @@ func main() {
 
 		requests, err := queries.CertificatesAndHashAlgorithmPaginated(ctx, repo.CertificatesAndHashAlgorithmPaginatedParams{
 			Limit:  limit,
-			Offset: page * limit,
+			Offset: (page - 1) * limit,
 		})
 
 		if err != nil {
@@ -308,16 +330,7 @@ func main() {
 		}
 		data := make(map[string]interface{})
 		data["Certificates"] = requests
-		data["CertificateCount"] = count
-		data["Pages"] = make([]int, shared.RoundUp(float64(count)/float64(limit)))
-		data["Page"] = page
-		data["Start"] = page * limit
-
-		if ((limit * page) + limit) > count {
-			data["End"] = count
-		} else {
-			data["End"] = (limit * page) + limit
-		}
+		data["Paginator"] = ui.NewPaginator(count, limit, page)
 
 		return c.Render(http.StatusOK, "requests/list.html", data)
 	})
@@ -651,7 +664,14 @@ func main() {
 
 		data["Templates"] = templates
 
-		return c.Render(200, "ca-templates", data)
+		switch c.QueryParam("render") {
+		case "table":
+			return c.Render(200, "ca-templates-table", data)
+		case "list":
+			return c.Render(200, "ca-templates-list", data)
+		default:
+			return c.Render(200, "ca-templates", data)
+		}
 	})
 
 	e.GET("settings/ca.html", func(c echo.Context) error {
@@ -667,28 +687,28 @@ func main() {
 		var caList []interface{}
 
 		for _, caData := range cas {
-			ca := adcs.NewCA(
-				adcs.WithName(caData.Name),
-				adcs.WithServer(caData.Server),
-				adcs.WithUsername(caData.Username),
-				adcs.WithPassword(caData.Password),
-				adcs.WithPort("135"), // TODO: get from repo
-			)
+			// ca := adcs.NewCA(
+			// 	adcs.WithName(caData.Name),
+			// 	adcs.WithServer(caData.Server),
+			// 	adcs.WithUsername(caData.Username),
+			// 	adcs.WithPassword(caData.Password),
+			// 	adcs.WithPort("135"), // TODO: get from repo
+			// )
 
-			templates, _ := ca.Templates(ctx)
+			// templates, _ := ca.Templates(ctx)
 
 			caList = append(caList, struct {
-				ID        int64
-				Name      string
-				Server    string
-				Username  string
-				Templates []adcs.CertificateAuthorityTemplate
+				ID       int64
+				Name     string
+				Server   string
+				Username string
+				// Templates []adcs.CertificateAuthorityTemplate
 			}{
-				ID:        caData.ID,
-				Name:      caData.Name,
-				Server:    caData.Server,
-				Username:  caData.Username,
-				Templates: templates,
+				ID:       caData.ID,
+				Name:     caData.Name,
+				Server:   caData.Server,
+				Username: caData.Username,
+				// Templates: templates,
 			})
 		}
 
@@ -1022,113 +1042,48 @@ func main() {
 	})
 
 	e.GET("scheduler/completed.html", func(c echo.Context) error {
-		jobs, err := queries.ListCompletedJobs(c.Request().Context())
+		ctx := c.Request().Context()
+		page, err := strconv.ParseInt(c.QueryParam("page"), 10, 64)
+		if err != nil || page < 1 {
+			page = 1
+		}
+		limit, err := strconv.ParseInt(c.QueryParam("limit"), 10, 64)
+		if err != nil || limit < 1 || limit > 100 {
+			limit = 10
+		}
+
+		jobs, err := queries.ListCompletedJobsPaginated(ctx, repo.ListCompletedJobsPaginatedParams{
+			Limit:  limit,
+			Offset: (page - 1) * limit,
+		})
+		if err != nil {
+			return c.Render(500, "error", err)
+		}
+
+		count, err := queries.CountCompletedJob(ctx)
 		if err != nil {
 			return c.Render(500, "error", err)
 		}
 
 		data := make(map[string]any)
 		data["Completed"] = jobs
+		data["Paginator"] = ui.NewPaginator(count, limit, page)
 
 		return c.Render(http.StatusOK, "scheduler/completed.html", data)
 	})
 
-	// e.GET("run", func(c echo.Context) error {
-
-	// 	jobs, _ := queries.ListSchedulerQueueJobs(c.Request().Context())
-
-	// 	job := jobs[0]
-
-	// 	// _, args, err := scheduler.GetProcessor(job.Processor, job.Arguments)
-
-	// 	proc, err := scheduler.GetProcessor(job.Processor, job.Arguments, scheduling.Metadata{
-	// 		Id:         job.ID,
-	// 		Retry:      job.Retry,
-	// 		RetryCount: job.RetryCount,
-	// 		CreatedAt:  job.CreatedAt,
-	// 	})
-
-	// 	if err != nil {
-	// 		return c.Render(http.StatusOK, "error", err)
-	// 	}
-	// 	proc.Run()
-
-	// 	return c.Render(http.StatusOK, "error", nil)
-	// })
-
-	// e.GET("queue", func(c echo.Context) error {
-
-	// 	queries.CreateSchedulerQueueJob(c.Request().Context(), repo.CreateSchedulerQueueJobParams{
-	// 		ID:         uuid.New(),
-	// 		Retry:      false,
-	// 		RetryCount: 0,
-	// 		CreatedAt:  time.Now(),
-	// 		EnqueuedAt: time.Now(),
-	// 		Arguments:  []byte(`{"test": "test","Greeting": "hello world"}`),
-	// 		Processor:  scheduling.HelloWorldArguments{}.Kind(),
-	// 	})
-
-	// 	return c.Render(http.StatusOK, "error", "hello world")
-	// })
-
-	// e.GET("schedule2", func(c echo.Context) error {
-
-	// 	performAt := time.Now().Add((8 * time.Second))
-
-	// 	err := queue.EnqueueJob(c.Request().Context(), performAt, &scheduling.Job{
-	// 		Id:         uuid.New(),
-	// 		Retry:      true,
-	// 		RetryCount: 0,
-	// 		CreatedAt:  time.Now(),
-	// 		Arguments:  scheduling.ErrorArguments{},
-	// 	})
-
-	// 	// queries.CreateInProgressSet(c.Request().Context(), repo.CreateInProgressSetParams{
-	// 	// 	ID:         uuid.New(),
-	// 	// 	Retry:      false,
-	// 	// 	RetryCount: 0,
-	// 	// 	CreatedAt:  time.Now(),
-	// 	// 	EnqueuedAt: time.Now(),
-	// 	// 	Processor:  "test",
-	// 	// })
-	// 	return c.Render(http.StatusOK, "error", err)
-	// })
-
 	e.GET("debug", func(c echo.Context) error {
+		ctx := c.Request().Context()
 
-		jobs, _ := queries.ListFailedJobs(c.Request().Context())
-
-		for _, job := range jobs {
-			fmt.Println(job.Log)
+		rowCount, err := queries.CountCompletedJob(ctx)
+		if err != nil {
+			return c.Render(500, "error", err)
 		}
+
+		fmt.Println("row count", rowCount)
 
 		return c.Render(http.StatusOK, "error", nil)
 	})
-
-	// e.GET("schedule", func(c echo.Context) error {
-
-	// 	performAt := time.Now().Add((5 * time.Second))
-
-	// 	err := queue.EnqueueJob(c.Request().Context(), performAt, &scheduling.Job{
-	// 		Id:         uuid.New(),
-	// 		Retry:      false,
-	// 		RetryCount: 0,
-	// 		CreatedAt:  time.Now(),
-	// 		Arguments: scheduling.HelloWorldArguments{
-	// 			Greeting: "Hello, World!",
-	// 		},
-	// 	})
-
-	// 	// queries.CreateInProgressSet(c.Request().Context(), repo.CreateInProgressSetParams{
-	// 	// 	ID:         uuid.New(),
-	// 	// 	Retry:      false,
-	// 	// 	RetryCount: 0,
-	// 	// 	CreatedAt:  time.Now(),
-	// 	// 	EnqueuedAt: time.Now(),
-	// 	// 	Processor:  "test",
-	// 	// })
-	// 	return c.Render(http.StatusOK, "error", err)
-	// })
 
 	go func() {
 		if err := scheduler.Run(); err != nil {

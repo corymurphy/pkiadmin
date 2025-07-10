@@ -1717,7 +1717,7 @@ func (q *Queries) ListCipherAlgorithm(ctx context.Context) ([]ListCipherAlgorith
 	return items, nil
 }
 
-const listCompletedJobs = `-- name: ListCompletedJobs :many
+const listCompletedJobsPaginated = `-- name: ListCompletedJobsPaginated :many
 SELECT id,
   retry,
   retry_count,
@@ -1727,10 +1727,17 @@ SELECT id,
   arguments,
   log
 FROM scheduler_completed
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?
 `
 
-func (q *Queries) ListCompletedJobs(ctx context.Context) ([]SchedulerCompleted, error) {
-	rows, err := q.db.QueryContext(ctx, listCompletedJobs)
+type ListCompletedJobsPaginatedParams struct {
+	Limit  int64
+	Offset int64
+}
+
+func (q *Queries) ListCompletedJobsPaginated(ctx context.Context, arg ListCompletedJobsPaginatedParams) ([]SchedulerCompleted, error) {
+	rows, err := q.db.QueryContext(ctx, listCompletedJobsPaginated, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

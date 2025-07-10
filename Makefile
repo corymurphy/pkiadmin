@@ -3,3 +3,6 @@ migrateup:
 
 sqlc-generate:
 	@.\sqlc.exe generate
+
+test:
+	@go test ./pkg/...

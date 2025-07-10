@@ -72,16 +72,12 @@
         <tr class="fold">
           <td colspan="8">
             <div class="fold-content">
-              <table>
-              <tbody>
-                {{ range $key, $value := $item.Templates }}
-                <tr>
-                  <td>{{ $value.Name }}</td>
-                  <td>{{ $value.ID }}</td>
-                </tr>
-                {{ end}}
-              </tbody>
-              </table>
+                <div id="ri-{{ .ID }}" class="htmx-indicator spinner-border text-light"
+                style="width: 1.3rem; height: 1.3rem; position: absolute;" role="status">
+                <span class="visually-hidden">loading</span>
+                </div>
+              <table hx-indicator="#ri-{{ .ID }}" hx-trigger="load"
+                hx-get="/ca/templates.html?ca={{ .ID }}&render=table"></table>
             </div>
           </td>
         </tr>

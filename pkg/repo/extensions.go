@@ -1,6 +1,7 @@
 package repo
 
 const (
+	Requested int64 = 0
 	Pending   int64 = 1
 	Approved  int64 = 2
 	Rejected  int64 = 3
@@ -12,6 +13,8 @@ const (
 
 func (c *CertificatesAndHashAlgorithmPaginatedRow) StatusString() string {
 	switch c.Status {
+	case Requested:
+		return "Requested"
 	case Pending:
 		return "Pending"
 	case Approved:
@@ -33,6 +36,8 @@ func (c *CertificatesAndHashAlgorithmPaginatedRow) StatusString() string {
 
 func (c *CertificatesAndHashAlgorithmPaginatedRow) StatusStyle() string {
 	switch c.Status {
+	case Requested:
+		return "amber"
 	case Pending:
 		return "amber"
 	case Approved:
